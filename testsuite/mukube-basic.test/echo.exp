@@ -1,0 +1,18 @@
+
+set test_name "Echo test"
+
+expect "#"
+send "echo Hello Mukube\r"
+
+expect {
+    "\nHello Mukube" {
+        pass "$test_name"
+    }
+    timeout {
+        fail "$test_name timed out. $expect_out(buffer)" 
+    }
+    "#" {
+        fail "$test_name returned prompt unexpectedly. $expect_out(buffer)"
+        send "\r"
+    }
+}

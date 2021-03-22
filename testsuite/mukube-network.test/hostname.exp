@@ -1,0 +1,21 @@
+
+# The hostname should be specified at buildtime. 
+# The expected hostname shoul be from the config files.
+
+set test_name "Hostname test"
+
+expect "#"
+send "hostname\r" 
+
+expect {
+    "Energinet" {
+        pass $test_name 
+    }
+    timeout {
+        fail "$test_name timed out. $expect_out(buffer)" 
+    }
+    "#" {
+        fail "$test_name returned prompt unexpectedly. $expect_out(buffer)"
+        send "\r"
+    }
+}
