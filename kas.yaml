@@ -1,0 +1,19 @@
+header:
+  version: 10
+machine: qemux86-64
+distro: poky
+repos:
+  poky:
+    url: https://git.yoctoproject.org/git/poky
+    refspec: hardknott
+    layers:
+      meta:
+      meta-poky:
+      meta-skeleton:
+      meta-yocto-bsp:
+local_conf_header:
+  meta-mukube: |
+    MACHINE = "qemux86-64"
+    DL_DIR = "${TOPDIR}/../downloads"
+    SSTATE_DIR = "${TOPDIR}/../sstate-cache/${MACHINE}"
+
