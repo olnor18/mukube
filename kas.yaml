@@ -1,6 +1,6 @@
 header:
   version: 10
-machine: qemux86-64
+machine: genericx86-64
 distro: poky
 repos:
   poky:
@@ -11,9 +11,36 @@ repos:
       meta-poky:
       meta-skeleton:
       meta-yocto-bsp:
+  meta-openembedded:
+    url: https://github.com/openembedded/meta-openembedded.git
+    refspec: hardknott
+    layers:
+      meta-oe:  
+      meta-filesystems:
+      meta-python:
+      meta-networking:
+  meta-virtualization:
+    url: https://git.yoctoproject.org/git/meta-virtualization
+    refspec: hardknott
+  meta-k8s-setup:
+    url: file://custom-layers/meta-k8s-setup
+  meta-network:
+    url: file://custom-layers/meta-network
+
 local_conf_header:
   meta-mukube: |
-    MACHINE = "qemux86-64"
+    MACHINE = "genericx86-64"
     DL_DIR = "${TOPDIR}/../downloads"
     SSTATE_DIR = "${TOPDIR}/../sstate-cache/${MACHINE}"
+    IMAGE_FSTYPES += "iso"
 
+bblayers_conf_header:
+  meta-mukube: |
+    POKY_BBLAYERS_CONF_VERSION = "2"
+    BBPATH = "${TOPDIR}"
+    BBFILES ?= ""
+
+    DISTRO_FEATURES += "systemd virtualization"
+    DISTRO_FEATURES_BACKFILL_CONSIDERED = "sysvinit"
+    VIRTUAL-RUNTIME_init_manager = "systemd"
+    VIRTUAL-RUNTIME_initscripts = ""
