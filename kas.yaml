@@ -10,6 +10,7 @@ repos:
       meta:
       meta-poky:
       meta-skeleton:
+      meta-selftest:
       meta-yocto-bsp:
   meta-openembedded:
     url: https://github.com/openembedded/meta-openembedded.git
@@ -28,14 +29,13 @@ repos:
     path: custom-layers/meta-network
 
 local_conf_header:
-  meta-mukube: |
-    MACHINE = "genericx86-64"
+  meta-k8s-setup: |
     DL_DIR = "${TOPDIR}/../downloads"
     SSTATE_DIR = "${TOPDIR}/../sstate-cache/${MACHINE}"
     IMAGE_FSTYPES += "iso"
 
 bblayers_conf_header:
-  meta-mukube: |
+  meta-k8s-setup: |
     POKY_BBLAYERS_CONF_VERSION = "2"
     BBPATH = "${TOPDIR}"
     BBFILES ?= ""
