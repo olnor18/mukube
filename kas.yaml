@@ -23,9 +23,9 @@ repos:
     url: https://git.yoctoproject.org/git/meta-virtualization
     refspec: hardknott
   meta-k8s-setup:
-    url: file://custom-layers/meta-k8s-setup
+    path: custom-layers/meta-k8s-setup
   meta-network:
-    url: file://custom-layers/meta-network
+    path: custom-layers/meta-network
 
 local_conf_header:
   meta-mukube: |
