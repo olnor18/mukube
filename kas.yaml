@@ -2,7 +2,7 @@ header:
   version: 10
 machine: genericx86-64
 distro: poky
-target: example-image.bb
+target: example-image
 repos:
   mukube:
     layers:
@@ -26,7 +26,7 @@ repos:
       meta-networking:
   meta-virtualization:
     url: https://git.yoctoproject.org/git/meta-virtualization
-    refspec: hardknott
+    refspec: f861b05994eee9af13b5e7d3a851a128aba9a329
 
 local_conf_header:
   meta-mukube: |
