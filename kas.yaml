@@ -3,6 +3,10 @@ header:
 machine: genericx86-64
 distro: poky
 repos:
+  mukube:
+    layers:
+      meta-k8s-setup:
+      meta-network:
   poky:
     url: https://git.yoctoproject.org/git/poky
     refspec: hardknott
@@ -22,10 +26,6 @@ repos:
   meta-virtualization:
     url: https://git.yoctoproject.org/git/meta-virtualization
     refspec: hardknott
-  meta-k8s-setup:
-    path: custom-layers/meta-k8s-setup
-  meta-network:
-    path: custom-layers/meta-network
 
 local_conf_header:
   meta-mukube: |
