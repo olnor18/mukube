@@ -32,6 +32,8 @@ local_conf_header:
   meta-k8s-setup: |
     DL_DIR = "${TOPDIR}/../downloads"
     SSTATE_DIR = "${TOPDIR}/../sstate-cache/${MACHINE}"
+    SSTATE_MIRRORS ?= "\
+    file://.* file:///mnt/sstate-cache/PATH"
     IMAGE_FSTYPES += "iso"
 
     INHERIT += "extrausers"
