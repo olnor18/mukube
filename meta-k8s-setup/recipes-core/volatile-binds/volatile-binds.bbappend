@@ -9,6 +9,7 @@ SRC_URI += " \
 VOLATILE_BINDS = "\ 
     /var/volatile/kubernetes /etc/kubernetes\n\
     /var/volatile/containerd /var/lib/containerd\n\
+    /var/volatile/kubelet /var/lib/kubelet\n\
 "
 
 do_install_append(){
