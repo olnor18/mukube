@@ -30,10 +30,10 @@ repos:
     refspec: hardknott 
 local_conf_header:
   meta-k8s-setup: |
-    DL_DIR = "${TOPDIR}/../downloads"
+    DL_DIR = "/mnt/downloads"
     SSTATE_DIR = "${TOPDIR}/../sstate-cache/${MACHINE}"
     SSTATE_MIRRORS ?= "\
-    file://.* file:///mnt/sstate-cache/PATH"
+    file://.* file:///mnt/sstate-cache/${MACHINE}/PATH"
     IMAGE_FSTYPES += "iso"
 
     INHERIT += "extrausers"
