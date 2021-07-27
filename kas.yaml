@@ -28,12 +28,14 @@ repos:
   meta-virtualization:
     url: https://git.yoctoproject.org/git/meta-virtualization
     refspec: hardknott 
-
 local_conf_header:
   meta-k8s-setup: |
     DL_DIR = "${TOPDIR}/../downloads"
     SSTATE_DIR = "${TOPDIR}/../sstate-cache/${MACHINE}"
     IMAGE_FSTYPES += "iso"
+
+    INHERIT += "extrausers"
+    EXTRA_USERS_PARAMS = "usermod -P root root;"
 
 bblayers_conf_header:
   meta-k8s-setup: |
