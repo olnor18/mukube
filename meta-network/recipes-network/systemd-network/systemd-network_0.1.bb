@@ -6,7 +6,7 @@ LIC_FILES_CHKSUM = "file://${WORKDIR}/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4d
 SRC_URI += "file://10-dhcp-systemd-network.network \
             file://COPYING.MIT"
 
-FILES_${PN} += " 10-dhcp-systemd-network.network \"
+FILES_${PN} += " 10-dhcp-systemd-network.network "
 
 do_install(){
     install -d ${D}/etc/systemd/network/
