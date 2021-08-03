@@ -37,6 +37,8 @@ local_conf_header:
     INHERIT += "extrausers"
     EXTRA_USERS_PARAMS = "usermod -P root root;"
 
+    APPEND += "systemd.legacy_systemd_cgroup_controller cgroup_enable=memory swapaccount=1"
+
 bblayers_conf_header:
   meta-k8s-setup: |
     POKY_BBLAYERS_CONF_VERSION = "2"
