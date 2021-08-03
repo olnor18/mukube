@@ -1,0 +1,9 @@
+# SET CONTROL PLANE IP AND PORT
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: InitConfiguration
+nodeRegistration:
+  name: genericx86-64
+  criSocket: unix:///run/containerd/containerd.sock
+  kubeletExtraArgs:
+    cgroup-driver: "systemd"
+    resolv-conf: /etc/resolv.conf
