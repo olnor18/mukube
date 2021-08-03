@@ -15,7 +15,6 @@ repos:
       meta:
       meta-poky:
       meta-skeleton:
-      meta-selftest:
       meta-yocto-bsp:
   meta-openembedded:
     url: https://github.com/openembedded/meta-openembedded.git
