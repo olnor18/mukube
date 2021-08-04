@@ -30,4 +30,6 @@ local_conf_header:
     "
 ``` 
 
+To use the local kas file you have to chain them by `kas <command> mukube/kas.yaml:mukube/<local kas file>.yaml`
+
 If your kas configuration outputs an iso file it will be located in the ./build/tmp/deploy/images/ folder.
