@@ -8,3 +8,7 @@ Use [kas](https://kas.readthedocs.io/en/latest/userguide.html#usage) to build a 
 * Build the project using kas by running `kas build --update mukube/kas.yaml`.
 
 If your kas configuration outputs an iso file it will be located in the ./build/tmp/deploy/images/ folder.
+
+To run the generated OS in qemu use:
+
+´ runqemu genericx86-64 nographic qemuparams="-m 6000 -smp 2" bootparams="init=/init" ´
