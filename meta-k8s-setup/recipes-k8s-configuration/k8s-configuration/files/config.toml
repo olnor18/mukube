@@ -1,6 +1,6 @@
 version = 2
-root = "/run/containerd/root"
-state = "/run/containerd/state"
+root = "/var/lib/containerd"
+state = "/run/containerd"
 plugin_dir = ""
 disabled_plugins = []
 required_plugins = []
@@ -94,7 +94,7 @@ oom_score = 0
           privileged_without_host_devices = false
           base_runtime_spec = ""
           [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-            SystemdCgroup = true
+            SystemdCgroup = false
     [plugins."io.containerd.grpc.v1.cri".cni]
       bin_dir = "/opt/cni/bin"
       conf_dir = "/etc/cni/net.d"
