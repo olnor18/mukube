@@ -3,7 +3,30 @@ apiVersion: kubeadm.k8s.io/v1beta2
 kind: InitConfiguration
 nodeRegistration:
   name: genericx86-64
-  criSocket: unix:///run/containerd/containerd.sock
+  criSocket: unix:///var/run/crio/crio.sock
   kubeletExtraArgs:
     cgroup-driver: "systemd"
     resolv-conf: /etc/resolv.conf
+---
+apiVersion: kubeadm.k8s.io/v1beta2
+imageRepository: k8s.gcr.io
+kind: ClusterConfiguration
+clusterName: kubernetes
+certificatesDir: /etc/kubernetes/pki
+kubernetesVersion: v1.20.7 # TODO inject version
+networking:
+  dnsDomain: cluster.local
+  serviceSubnet: 10.96.0.0/12
+dns:
+  type: CoreDNS
+scheduler: {}
+apiServer:
+  timeoutForControlPlane: 10m0s
+  extraArgs:
+    enable-admission-plugins: DefaultTolerationSeconds
+    default-not-ready-toleration-seconds: "10"
+    default-unreachable-toleration-seconds: "10"
+controllerManager: {}
+etcd:
+  local:
+    dataDir: /var/lib/etcd
