@@ -11,7 +11,8 @@ SRC_URI += "file://config.toml \
             file://InitConfiguration.yaml \
             file://init \
             file://kubelet.service \
-            file://crio.conf"
+            file://crio.conf \
+            file://crio.service"
 
 FILES_${PN} += " config.toml \
                  /proc/sys/net/ipv4/ip_forward \
@@ -32,7 +33,6 @@ do_install(){
     install -m 0755 ${WORKDIR}/10-kubeadm.conf ${D}/etc/systemd/system/kubelet.service.d/10-kubeadm.conf
     install -m 0755 ${WORKDIR}/kubelet.service ${D}/etc/systemd/system/kubelet.service
 
-
     # Set kubeconfig 
     install -d ${D}/var/lib/kubelet/
     install -m 0755 ${WORKDIR}/InitConfiguration.yaml ${D}/InitConfiguration.yaml
@@ -44,6 +44,9 @@ do_install(){
     # Switch to tempfs
     install -m 0755 ${WORKDIR}/init ${D}/init
 
+    # Install and enable cri-o container runtime
     install -d ${D}/etc/crio/crio.conf.d/
     install -m 0755 ${WORKDIR}/crio.conf ${D}/etc/crio/crio.conf.d/02-cgroup-manager.conf
+    install -m 0755 ${WORKDIR}/crio.service ${D}/etc/systemd/system/crio.service
+
 }
