@@ -19,6 +19,8 @@ FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  init"
 
 do_install(){
+    install -d ${D}/etc/
+    
     # Set crictl config
     install -m 0755 ${WORKDIR}/crictl.yaml ${D}/etc/crictl.yaml
 
