@@ -3,8 +3,7 @@ DESCRIPTION = ""
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
 
-SRC_URI += "file://config.toml \
-            file://COPYING.MIT \
+SRC_URI += "file://COPYING.MIT \
             file://local.conf \
             file://crictl.yaml \
             file://10-kubeadm.conf \
@@ -14,8 +13,7 @@ SRC_URI += "file://config.toml \
             file://crio.conf \
             file://crio.service"
 
-FILES_${PN} += " config.toml \
-                 /proc/sys/net/ipv4/ip_forward \
+FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
                  InitConfiguration.yaml \
                  init"
