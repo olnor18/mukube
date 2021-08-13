@@ -36,6 +36,7 @@ repos:
 local_conf_header:
   meta-k8s-setup: |
     IMAGE_FSTYPES += "iso live"
+    EFI_PROVIDER = "systemd-boot"
 
     INHERIT += "extrausers"
     EXTRA_USERS_PARAMS = "usermod -P root root;"
