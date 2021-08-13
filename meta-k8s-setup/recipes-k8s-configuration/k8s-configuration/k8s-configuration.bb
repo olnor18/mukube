@@ -8,15 +8,13 @@ SRC_URI += "file://COPYING.MIT \
             file://crictl.yaml \
             file://10-kubeadm.conf \
             file://InitConfiguration.yaml \
-            file://init \
             file://kubelet.service \
             file://crio.conf \
             file://crio.service"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
-                 InitConfiguration.yaml \
-                 init"
+                 InitConfiguration.yaml"
 
 do_install(){
     install -d ${D}/etc/
@@ -36,9 +34,6 @@ do_install(){
     # Enable ipv4 port forward
     install -d ${D}/etc/sysctl.d/
     install -m 0755 ${WORKDIR}/local.conf ${D}/etc/sysctl.d/local.conf
-
-    # Switch to tempfs
-    install -m 0755 ${WORKDIR}/init ${D}/init
 
     # Install and enable cri-o container runtime
     install -d ${D}/etc/crio/crio.conf.d/
