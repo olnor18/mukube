@@ -30,6 +30,12 @@ local_conf_header:
     "
 ``` 
 
-To use the local kas file you have to chain them by `kas <command> mukube/kas.yaml:mukube/<local kas file>.yaml`
+To use the local kas file you have to chain them by `kas <command> mukube/kas.yaml:mukube/kas-local.yaml`.
+
+As kas needs the local file to be in the same directory as the original kas file we require this file to be named `kas-local.yaml`
 
 If your kas configuration outputs an iso file it will be located in the ./build/tmp/deploy/images/ folder.
+
+To run the generated OS in qemu use:
+
+´ runqemu genericx86-64 nographic qemuparams="-m 6000 -smp 2" bootparams="init=/init" ´
