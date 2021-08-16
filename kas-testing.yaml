@@ -1,0 +1,22 @@
+header:
+  version: 10
+  includes:
+    - kas-test.yaml
+    - kas-local.yaml
+machine: genericx86-64
+distro: poky
+target: mukube-minimal-test-image
+repos:
+  mukube:
+    layers:
+      meta-k8s-testing:
+
+bblayers_conf_header:
+  meta-k8s-testing: |
+    POKY_BBLAYERS_CONF_VERSION = "2"
+    BBPATH = "${TOPDIR}"
+    BBFILES ?= ""
+
+local_conf_header:
+  meta-k8s-testing: |
+    INHERIT+="testimage"
