@@ -37,9 +37,6 @@ local_conf_header:
   meta-k8s-setup: |
     IMAGE_FSTYPES += "iso live"
 
-    INHERIT += "extrausers"
-    EXTRA_USERS_PARAMS = "usermod -P root root;"
-
 bblayers_conf_header:
   meta-k8s-setup: |
     POKY_BBLAYERS_CONF_VERSION = "2"

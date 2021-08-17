@@ -42,11 +42,11 @@ To run the generated OS in qemu use:
 
 To generate a testable image run: 
 
-`kas build kas-testing.yaml --update`
+`kas build mukube/kas-testing.yaml --update`
 
 To run tests launch shell with:
 
-`kas shell kas-testing.yaml --update`
+`kas shell mukube/kas-testing.yaml --update`
 
 and run:
 
