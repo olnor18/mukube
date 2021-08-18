@@ -19,4 +19,5 @@ bblayers_conf_header:
 
 local_conf_header:
   meta-k8s-testing: |
-    INHERIT+="testimage"
+    INHERIT += " testimage"
+    TEST_SUITES = "kubeadm"

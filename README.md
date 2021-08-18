@@ -51,3 +51,7 @@ To run tests launch shell with:
 and run:
 
 `bitbake qemu-helper-native && bitbake mukube-minimal-test-image -c testimage ` 
+
+`bitbake -c clean mukube-minimal-test-image` 
+
+`bitbake -c clean k8s-testing && bitbake mukube-minimal-test-image && bitbake mukube-minimal-test-image -c testimage` 
