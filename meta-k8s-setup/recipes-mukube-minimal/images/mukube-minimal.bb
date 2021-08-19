@@ -21,7 +21,6 @@ tar \
 libseccomp \
 tzdata \
 podman \
-libseccomp \
 " 
 
 APPEND += "random.trust_cpu=on hw_rng_model=virtio systemd.legacy_systemd_cgroup_controller=yes debug init=/init"
