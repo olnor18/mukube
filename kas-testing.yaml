@@ -17,6 +17,8 @@ bblayers_conf_header:
     BBPATH = "${TOPDIR}"
     BBFILES ?= ""
 
+    HOSTTOOLS = "docker"
+
 local_conf_header:
   meta-k8s-testing: |
     INHERIT += " testimage"

@@ -16,7 +16,13 @@ SRC_URI += "file://COPYING.MIT \
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
                  InitConfiguration.yaml \
-                 init"
+                 init \
+                 ${CONTAINER_IMAGE_FOLDER} \
+                 ${CONTAINER_IMAGE_FOLDER}api.tar \
+                 ${CONTAINER_IMAGE_FOLDER}ctr.tar"
+
+
+CONTAINER_IMAGE_FOLDER = "/var/ctr-images/"
 
 do_install(){
     install -d ${D}/etc/
@@ -44,4 +50,16 @@ do_install(){
     install -d ${D}/etc/crio/crio.conf.d/
     install -m 0755 ${WORKDIR}/crio.conf ${D}/etc/crio/crio.conf.d/02-cgroup-manager.conf
     install -m 0755 ${WORKDIR}/crio.service ${D}/etc/systemd/system/crio.service
+
+    # Install container images for control plane
+    install -d ${D}${CONTAINER_IMAGE_FOLDER}
+
+    docker pull k8s.gcr.io/kube-apiserver:v1.20.7 
+    docker save -o ${WORKDIR}/api.tar k8s.gcr.io/kube-apiserver:v1.20.7 
+    install -m 0755 ${WORKDIR}/api.tar ${D}${CONTAINER_IMAGE_FOLDER}api.tar
+
+
+    docker pull k8s.gcr.io/kube-controller-manager:v1.20.7
+    docker save -o ${WORKDIR}/ctr.tar k8s.gcr.io/kube-controller-manager:v1.20.7
+    install -m 0755 ${WORKDIR}/ctr.tar ${D}${CONTAINER_IMAGE_FOLDER}ctr.tar
 }
