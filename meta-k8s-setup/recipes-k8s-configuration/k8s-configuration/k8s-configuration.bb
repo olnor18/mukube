@@ -11,7 +11,8 @@ SRC_URI += "file://COPYING.MIT \
             file://init \
             file://kubelet.service \
             file://crio.conf \
-            file://crio.service"
+            file://crio.service \
+            file://fstab"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
@@ -19,13 +20,15 @@ FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  init \
                  ${CONTAINER_IMAGE_FOLDER} \
                  ${CONTAINER_IMAGE_FOLDER}api.tar \
-                 ${CONTAINER_IMAGE_FOLDER}ctr.tar"
+                 ${CONTAINER_IMAGE_FOLDER}ctr.tar \
+                 fstab"
 
 
 CONTAINER_IMAGE_FOLDER = "/var/ctr-images/"
 
 do_install(){
     install -d ${D}/etc/
+    install -m 0755 ${WORKDIR}/fstab ${D}/etc/fstab
     
     # Set crictl config
     install -m 0755 ${WORKDIR}/crictl.yaml ${D}/etc/crictl.yaml
