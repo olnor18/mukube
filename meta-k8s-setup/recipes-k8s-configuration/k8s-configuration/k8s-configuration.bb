@@ -17,19 +17,18 @@ SRC_URI += "file://COPYING.MIT \
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
                  InitConfiguration.yaml \
-                 init \
                  ${CONTAINER_IMAGE_FOLDER} \
                  ${CONTAINER_IMAGE_FOLDER}api.tar \
                  ${CONTAINER_IMAGE_FOLDER}ctr.tar \
                  fstab"
 
 
-CONTAINER_IMAGE_FOLDER = "/var/ctr-images/"
+CONTAINER_IMAGE_FOLDER = "/ctr-images/"
 
 do_install(){
     install -d ${D}/etc/
     install -m 0755 ${WORKDIR}/fstab ${D}/etc/fstab
-    
+
     # Set crictl config
     install -m 0755 ${WORKDIR}/crictl.yaml ${D}/etc/crictl.yaml
 
@@ -45,9 +44,6 @@ do_install(){
     # Enable ipv4 port forward
     install -d ${D}/etc/sysctl.d/
     install -m 0755 ${WORKDIR}/local.conf ${D}/etc/sysctl.d/local.conf
-
-    # Switch to tempfs
-    install -m 0755 ${WORKDIR}/init ${D}/init
 
     # Install and enable cri-o container runtime
     install -d ${D}/etc/crio/crio.conf.d/
