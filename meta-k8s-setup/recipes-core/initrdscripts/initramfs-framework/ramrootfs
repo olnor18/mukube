@@ -1,0 +1,15 @@
+#!/bin/sh
+
+ramrootfs_enabled() {
+	return 0
+}
+
+ramrootfs_run() {
+	if [ -n "$ROOTFS_DIR" ]; then
+		mkdir "$ROOTFS_DIR.org"
+		mount --move "$ROOTFS_DIR" "$ROOTFS_DIR.org"
+		mount -t tmpfs -o size=90% tmpfs "$ROOTFS_DIR"
+		cp -a "$ROOTFS_DIR.org/." "$ROOTFS_DIR"
+		umount "$ROOTFS_DIR.org"
+	fi
+}
