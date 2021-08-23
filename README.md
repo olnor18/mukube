@@ -38,7 +38,7 @@ If your kas configuration outputs an iso file it will be located in the ./build/
 
 To run the generated OS in qemu use:
 
-`runqemu genericx86-64 nographic qemuparams="-m 6000 -smp 2" bootparams="init=/init" `
+`runqemu genericx86-64 nographic qemuparams="-m 6000 -smp 2" `
 
 To generate a testable image run: 
 
@@ -52,6 +52,10 @@ and run:
 
 `bitbake qemu-helper-native && bitbake mukube-minimal-test-image -c testimage ` 
 
+To clean the test cuild run:
+
 `bitbake -c clean mukube-minimal-test-image ` 
+
+For a full command that cleans, builds and runs the tests:
 
 `bitbake -c clean k8s-testing && bitbake mukube-minimal-test-image && bitbake mukube-minimal-test-image -c testimage ` 
