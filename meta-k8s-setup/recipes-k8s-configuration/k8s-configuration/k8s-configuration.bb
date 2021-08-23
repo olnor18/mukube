@@ -62,6 +62,4 @@ do_install(){
 
     docker save -o ${WORKDIR}/images.tar ${CONTAINER_IMAGES} 
     install -m 0755 ${WORKDIR}/images.tar ${D}/images.tar
-
-
 }
