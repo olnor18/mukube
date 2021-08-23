@@ -17,13 +17,18 @@ SRC_URI += "file://COPYING.MIT \
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
                  InitConfiguration.yaml \
-                 ${CONTAINER_IMAGE_FOLDER} \
-                 ${CONTAINER_IMAGE_FOLDER}api.tar \
-                 ${CONTAINER_IMAGE_FOLDER}ctr.tar \
+                 images.tar \
                  fstab"
 
+KUBERNETES_VERSION = "v1.20.7"
 
-CONTAINER_IMAGE_FOLDER = "/ctr-images/"
+CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
+                    k8s.gcr.io/kube-controller-manager:${KUBERNETES_VERSION} \
+                    k8s.gcr.io/kube-scheduler:${KUBERNETES_VERSION} \
+                    k8s.gcr.io/kube-proxy:${KUBERNETES_VERSION} \
+                    k8s.gcr.io/pause:3.4.1 \
+                    k8s.gcr.io/etcd:3.4.13-0 \
+                    k8s.gcr.io/coredns/coredns:v1.8.0"
 
 do_install(){
     install -d ${D}/etc/
@@ -51,14 +56,12 @@ do_install(){
     install -m 0755 ${WORKDIR}/crio.service ${D}/etc/systemd/system/crio.service
 
     # Install container images for control plane
-    install -d ${D}${CONTAINER_IMAGE_FOLDER}
+    for image in $(echo ${CONTAINER_IMAGES}); do
+	docker pull $image
+    done
 
-    docker pull k8s.gcr.io/kube-apiserver:v1.20.7 
-    docker save -o ${WORKDIR}/api.tar k8s.gcr.io/kube-apiserver:v1.20.7 
-    install -m 0755 ${WORKDIR}/api.tar ${D}${CONTAINER_IMAGE_FOLDER}api.tar
+    docker save -o ${WORKDIR}/images.tar ${CONTAINER_IMAGES} 
+    install -m 0755 ${WORKDIR}/images.tar ${D}/images.tar
 
 
-    docker pull k8s.gcr.io/kube-controller-manager:v1.20.7
-    docker save -o ${WORKDIR}/ctr.tar k8s.gcr.io/kube-controller-manager:v1.20.7
-    install -m 0755 ${WORKDIR}/ctr.tar ${D}${CONTAINER_IMAGE_FOLDER}ctr.tar
 }
