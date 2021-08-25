@@ -8,3 +8,4 @@ local_conf_header:
   testing: |
     INHERIT += "testimage"
     TEST_SUITES = " kubeadm"
+    QB_DEFAULT_FSTYPE = "iso"
