@@ -52,7 +52,7 @@ and run:
 
 `bitbake qemu-helper-native && bitbake mukube-minimal-test-image -c testimage ` 
 
-To clean the test cuild run:
+To clean the test build run:
 
 `bitbake -c clean mukube-minimal-test-image ` 
 
