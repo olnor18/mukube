@@ -5,7 +5,7 @@ header:
     - kas-local.yaml
 machine: genericx86-64
 distro: poky
-target: mukube-minimal-test-image
+target: mukube-test-image
 repos:
   mukube:
     layers:

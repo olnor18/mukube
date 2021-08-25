@@ -50,12 +50,12 @@ To run tests launch shell with:
 
 and run:
 
-`bitbake qemu-helper-native && bitbake mukube-minimal-test-image -c testimage ` 
+`bitbake qemu-helper-native && bitbake mukube-test-image -c testimage ` 
 
 To clean the test cuild run:
 
-`bitbake -c clean mukube-minimal-test-image ` 
+`bitbake -c clean mukube-test-image ` 
 
 For a full command that cleans, builds and runs the tests:
 
-`bitbake -c clean mukube-minimal-test-image && bitbake mukube-minimal-test-image && bitbake mukube-minimal-test-image -c testimage ` 
+`bitbake -c clean mukube-test-image && bitbake mukube-test-image && bitbake mukube-test-image -c testimage ` 

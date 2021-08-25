@@ -1,6 +1,6 @@
 LICENSE = "MIT"
 
-require recipes-mukube-minimal/images/mukube-minimal.bb
+require recipes-mukube/images/mukube.bb
 
 TEST_QEMUPARAMS = "-m 20000 -smp 4"
 

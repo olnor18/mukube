@@ -2,7 +2,7 @@ header:
   version: 10
 machine: genericx86-64
 distro: poky
-target: mukube-minimal
+target: mukube
 repos:
   mukube:
     layers:
