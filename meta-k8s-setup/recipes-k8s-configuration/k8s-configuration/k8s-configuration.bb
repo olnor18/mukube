@@ -8,7 +8,6 @@ SRC_URI += "file://COPYING.MIT \
             file://crictl.yaml \
             file://10-kubeadm.conf \
             file://InitConfiguration.yaml \
-            file://init \
             file://kubelet.service \
             file://crio.conf \
             file://crio.service \
