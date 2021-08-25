@@ -23,7 +23,7 @@ tzdata \
 podman \
 " 
 
-APPEND += "random.trust_cpu=on hw_rng_model=virtio systemd.legacy_systemd_cgroup_controller=yes debug init=/init"
+APPEND += "random.trust_cpu=on hw_rng_model=virtio systemd.legacy_systemd_cgroup_controller=yes debug"
 LABELS_LIVE := "boot"
 
 IMAGE_FEATURES = ""
