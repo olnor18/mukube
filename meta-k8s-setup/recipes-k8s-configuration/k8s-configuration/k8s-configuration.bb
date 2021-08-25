@@ -57,7 +57,7 @@ do_install(){
 
     # Install container images for control plane
     for image in $(echo ${CONTAINER_IMAGES}); do
-	docker pull $image
+        docker pull $image
     done
 
     docker save -o ${WORKDIR}/images.tar ${CONTAINER_IMAGES} 
