@@ -1,7 +1,7 @@
 header:
   version: 10
   includes:
-    - kas-test.yaml
+    - kas-base.yaml
     - kas-local.yaml
 machine: genericx86-64
 distro: poky
