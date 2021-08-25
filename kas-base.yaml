@@ -1,5 +1,7 @@
 header:
   version: 10
+  includes:
+  - kas-local.yaml
 machine: genericx86-64
 distro: poky
 target: mukube

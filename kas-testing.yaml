@@ -2,5 +2,4 @@ header:
   version: 10
   includes:
     - kas-base.yaml
-    - kas-local.yaml
 target: mukube-test-image
