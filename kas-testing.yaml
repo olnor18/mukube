@@ -3,23 +3,4 @@ header:
   includes:
     - kas-base.yaml
     - kas-local.yaml
-machine: genericx86-64
-distro: poky
 target: mukube-test-image
-repos:
-  mukube:
-    layers:
-      meta-k8s-testing:
-
-bblayers_conf_header:
-  meta-k8s-testing: |
-    POKY_BBLAYERS_CONF_VERSION = "2"
-    BBPATH = "${TOPDIR}"
-    BBFILES ?= ""
-
-    HOSTTOOLS = "docker"
-
-local_conf_header:
-  meta-k8s-testing: |
-    INHERIT += " testimage"
-    TEST_SUITES = "kubeadm"
