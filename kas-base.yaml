@@ -37,7 +37,8 @@ repos:
     refspec: hardknott
 local_conf_header:
   meta-k8s-setup: |
-    IMAGE_FSTYPES += "iso live"
+    IMAGE_FSTYPES := "iso live"
+    HOSTTOOLS = "docker"
 
 bblayers_conf_header:
   meta-k8s-setup: |
