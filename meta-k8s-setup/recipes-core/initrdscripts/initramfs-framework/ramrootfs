@@ -1,0 +1,19 @@
+#!/bin/sh
+
+ramrootfs_enabled() {
+	return 0
+}
+
+ramrootfs_run() {
+	if [ -n "$ROOTFS_DIR" ]; then
+		mkdir "$ROOTFS_DIR.org"
+		mount --move "$ROOTFS_DIR" "$ROOTFS_DIR.org"
+		size="$(grep MemTotal /proc/meminfo | awk '{print $2}')"
+		size="$((size/100*90))"
+		zram_dev="$(zramctl -f -s "${size}KiB")"
+		mkfs.ext4 -O ^has_journal "$zram_dev"
+		mount "$zram_dev" "$ROOTFS_DIR"
+		cp -a "$ROOTFS_DIR.org/." "$ROOTFS_DIR"
+		umount "$ROOTFS_DIR.org"
+	fi
+}
