@@ -38,6 +38,7 @@ local_conf_header:
     EXTRA_IMAGEDEPENDS += "ovmf qemu-system-native qemu-helper-native"
     QB_MEM = "6G"
     QB_OPT_APPEND:append = " -smp 2"
+    QB_MACHINE = "-machine accel=kvm:tcg"
     EFI_PROVIDER = "systemd-boot"
 
     IMAGE_FSTYPES += "wic"
