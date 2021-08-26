@@ -36,6 +36,8 @@ repos:
 local_conf_header:
   meta-k8s-setup: |
     EXTRA_IMAGEDEPENDS += "ovmf qemu-system-native qemu-helper-native"
+    QB_MEM = "6G"
+    QB_OPT_APPEND:append = " -smp 2"
     EFI_PROVIDER = "systemd-boot"
 
     IMAGE_FSTYPES += "wic"
