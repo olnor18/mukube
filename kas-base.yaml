@@ -17,6 +17,10 @@ repos:
       meta-poky:
       meta-skeleton:
       meta-yocto-bsp:
+    patches:
+      systemd:
+        repo: mukube
+        path: patches/systemd/
   meta-openembedded:
     url: https://github.com/openembedded/meta-openembedded.git
     refspec: hardknott
