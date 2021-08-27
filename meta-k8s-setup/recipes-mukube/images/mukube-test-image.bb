@@ -6,7 +6,7 @@ require recipes-mukube/images/mukube.bb
 TEST_QEMUPARAMS = "-m 20000 -smp 4"
 
 # Make qemu boot the iso to do testing
-TEST_RUNQEMUPARAMS = "iso"
+TEST_RUNQEMUPARAMS = "wic"
 
 DESCRIPTION = "A Test image build on the mukube minimal image"
 
