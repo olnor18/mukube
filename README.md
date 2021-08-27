@@ -38,4 +38,6 @@ If your kas configuration outputs an iso file it will be located in the ./build/
 
 To run the generated OS in qemu use:
 
-`runqemu wic ovmf genericx86-64 nographic qemuparams="-m 6000 -smp 2"`
+`runqemu wic ovmf genericx86-64 nographic`
+
+Be sure your user has access to `/dev/kvm` for [KVM](https://en.wikipedia.org/wiki/Kernel-based_Virtual_Machine) acceleration, on Ubuntu this can be done by running: `sudo usermod -a -G kvm $USER`.
