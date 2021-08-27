@@ -35,8 +35,16 @@ repos:
     refspec: hardknott
 local_conf_header:
   meta-k8s-setup: |
-    IMAGE_FSTYPES += "iso live"
+    EXTRA_IMAGEDEPENDS += "ovmf qemu-system-native qemu-helper-native"
     EFI_PROVIDER = "systemd-boot"
+
+    IMAGE_FSTYPES += "wic"
+    IMAGE_CLASSES += "dm-verity-img"
+    WKS_FILE = "mukube-minimal.wks.in"
+    DM_VERITY_IMAGE = "mukube-minimal"
+    DM_VERITY_IMAGE_TYPE = "ext4"
+    INITRAMFS_IMAGE = "dm-verity-image-initramfs"
+    INITRAMFS_FSTYPES = "cpio.gz"
 
     INHERIT += "extrausers"
     EXTRA_USERS_PARAMS = "usermod -P root root;"
