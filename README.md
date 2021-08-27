@@ -60,3 +60,6 @@ For a full command that cleans, builds and runs the tests:
 
 `bitbake -c clean mukube-test-image && bitbake mukube-test-image && bitbake mukube-test-image -c testimage ` 
 
+`runqemu wic ovmf genericx86-64 nographic`
+
+Be sure your user has access to `/dev/kvm` for [KVM](https://en.wikipedia.org/wiki/Kernel-based_Virtual_Machine) acceleration, on Ubuntu this can be done by running: `sudo usermod -a -G kvm $USER`.
