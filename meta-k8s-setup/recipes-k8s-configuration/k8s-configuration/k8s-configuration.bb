@@ -10,14 +10,12 @@ SRC_URI += "file://COPYING.MIT \
             file://InitConfiguration.yaml \
             file://kubelet.service \
             file://crio.conf \
-            file://crio.service \
-            file://fstab"
+            file://crio.service"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
                  InitConfiguration.yaml \
-                 images.tar \
-                 fstab"
+                 images.tar"
 
 KUBERNETES_VERSION = "v1.20.7"
 
@@ -31,7 +29,6 @@ CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
 
 do_install(){
     install -d ${D}/etc/
-    install -m 0755 ${WORKDIR}/fstab ${D}/etc/fstab
 
     # Set crictl config
     install -m 0755 ${WORKDIR}/crictl.yaml ${D}/etc/crictl.yaml
