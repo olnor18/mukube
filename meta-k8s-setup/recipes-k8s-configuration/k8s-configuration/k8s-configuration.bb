@@ -1,4 +1,4 @@
-SUMMARY = "Write configuration files needed for containerd and k8s"
+SUMMARY = "Write configuration files needed for Kubernetes and CRI-O"
 DESCRIPTION = ""
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -52,7 +52,7 @@ do_install(){
     install -m 0755 ${WORKDIR}/crio.service ${D}/etc/systemd/system/crio.service
 
     # Install container images for control plane
-    for image in $(echo ${CONTAINER_IMAGES}); do
+    for image in ${CONTAINER_IMAGES}; do
         docker pull $image
     done
 
