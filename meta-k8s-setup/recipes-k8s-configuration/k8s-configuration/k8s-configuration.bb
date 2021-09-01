@@ -1,4 +1,4 @@
-SUMMARY = "Write configuration files needed for containerd and k8s"
+SUMMARY = "Write configuration files needed for Kubernetes and CRI-O"
 DESCRIPTION = ""
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
@@ -14,11 +14,22 @@ SRC_URI += "file://COPYING.MIT \
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
-                 InitConfiguration.yaml"
+                 InitConfiguration.yaml \
+                 images.tar"
+
+KUBERNETES_VERSION = "v1.20.7"
+
+CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
+                    k8s.gcr.io/kube-controller-manager:${KUBERNETES_VERSION} \
+                    k8s.gcr.io/kube-scheduler:${KUBERNETES_VERSION} \
+                    k8s.gcr.io/kube-proxy:${KUBERNETES_VERSION} \
+                    k8s.gcr.io/pause:3.4.1 \
+                    k8s.gcr.io/etcd:3.4.13-0 \
+                    k8s.gcr.io/coredns/coredns:v1.8.0"
 
 do_install(){
     install -d ${D}/etc/
-    
+
     # Set crictl config
     install -m 0755 ${WORKDIR}/crictl.yaml ${D}/etc/crictl.yaml
 
@@ -39,4 +50,12 @@ do_install(){
     install -d ${D}/etc/crio/crio.conf.d/
     install -m 0755 ${WORKDIR}/crio.conf ${D}/etc/crio/crio.conf.d/02-cgroup-manager.conf
     install -m 0755 ${WORKDIR}/crio.service ${D}/etc/systemd/system/crio.service
+
+    # Install container images for control plane
+    for image in ${CONTAINER_IMAGES}; do
+        docker pull $image
+    done
+
+    docker save -o ${WORKDIR}/images.tar ${CONTAINER_IMAGES} 
+    install -m 0755 ${WORKDIR}/images.tar ${D}/images.tar
 }

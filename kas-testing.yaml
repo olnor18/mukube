@@ -1,0 +1,11 @@
+header:
+  version: 10
+  includes:
+    - kas-base.yaml
+target: mukube-test-image
+
+local_conf_header:
+  testing: |
+    INHERIT += "testimage"
+    TEST_SUITES = " kubeadm"
+    DM_VERITY_IMAGE = "mukube-test-image"
