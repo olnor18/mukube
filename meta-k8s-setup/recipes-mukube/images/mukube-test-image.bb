@@ -5,7 +5,7 @@ require recipes-mukube/images/mukube.bb
 # Parameters parsed directly to qemu  
 TEST_QEMUPARAMS = "-m 20000 -smp 4"
 
-# Make qemu boot the iso to do testing
+# Parameters parsed directly to runqemu  
 TEST_RUNQEMUPARAMS = "wic ovmf kvm"
 
 DESCRIPTION = "A Test image build on the mukube minimal image"
