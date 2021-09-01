@@ -41,6 +41,7 @@ local_conf_header:
     QB_MEM = "6G"
     QB_OPT_APPEND:append = " -smp 4"
     QB_MACHINE = "-machine accel=kvm:tcg"
+    QB_DEFAULT_FSTYPE = "wic"
     EFI_PROVIDER = "systemd-boot"
 
     IMAGE_FSTYPES += "wic"
