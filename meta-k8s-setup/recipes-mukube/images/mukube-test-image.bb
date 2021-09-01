@@ -2,10 +2,10 @@ LICENSE = "MIT"
 
 require recipes-mukube/images/mukube.bb
 
-# Parameters parsed directly to qemu  
+# Parameters passed directly to qemu  
 TEST_QEMUPARAMS = "-m 20000 -smp 4"
 
-# Parameters parsed directly to runqemu  
+# Parameters passed directly to runqemu  
 TEST_RUNQEMUPARAMS = "wic ovmf kvm"
 
 DESCRIPTION = "A Test image build on the mukube minimal image"
