@@ -2,9 +2,9 @@ header:
   version: 10
   includes:
   - kas-local.yaml
-machine: genericx86-64
+machine: mukube
 distro: poky
-target: mukube
+target: mukube-image
 repos:
   mukube:
     layers:
@@ -51,7 +51,7 @@ local_conf_header:
     IMAGE_FSTYPES += "wic"
     IMAGE_CLASSES += "dm-verity-img"
     WKS_FILE = "mukube.wks.in"
-    DM_VERITY_IMAGE ?= "mukube"
+    DM_VERITY_IMAGE ?= "mukube-image"
     DM_VERITY_IMAGE_TYPE = "ext4"
     INITRAMFS_IMAGE = "dm-verity-image-initramfs"
     INITRAMFS_FSTYPES = "cpio.gz"

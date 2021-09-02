@@ -38,7 +38,7 @@ If your kas configuration outputs an iso file it will be located in the ./build/
 
 To run the generated OS in qemu use:
 
-`runqemu wic ovmf genericx86-64 nographic qemuparams="-m 6000 -smp 4" `
+`runqemu wic ovmf mukube nographic qemuparams="-m 6000 -smp 4" `
 
 To generate a testable image run: 
 
@@ -60,6 +60,6 @@ For a full command that cleans, builds and runs the tests:
 
 `bitbake -c clean mukube-test-image && bitbake mukube-test-image && bitbake mukube-test-image -c testimage ` 
 
-`runqemu wic ovmf genericx86-64 nographic`
+`runqemu wic ovmf mukube nographic`
 
 Be sure your user has access to `/dev/kvm` for [KVM](https://en.wikipedia.org/wiki/Kernel-based_Virtual_Machine) acceleration, on Ubuntu this can be done by running: `sudo usermod -a -G kvm $USER`.

@@ -7,3 +7,4 @@ do_install:append() {
 	install -d ${D}/efi
 }
 FILES:${PN} += "/efi"
+RDEPENDS:${PN} += "packagegroup-base-vfat"
