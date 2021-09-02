@@ -10,7 +10,8 @@ SRC_URI += "file://COPYING.MIT \
             file://InitConfiguration.yaml \
             file://kubelet.service \
             file://crio.conf \
-            file://crio.service"
+            file://crio.service \
+            file://fstab"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
