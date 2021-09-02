@@ -1,0 +1,8 @@
+header:
+  version: 10
+  includes:
+    - kas-base.yaml
+target: mukube-dev-image
+local_conf_header:
+  dev: |
+    DM_VERITY_IMAGE = "mukube-dev-image"
