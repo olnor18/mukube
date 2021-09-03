@@ -56,7 +56,7 @@ local_conf_header:
     INITRAMFS_IMAGE = "dm-verity-image-initramfs"
     INITRAMFS_FSTYPES = "cpio.gz"
 
-    HOSTTOOLS = "docker"
+    HOSTTOOLS += "docker"
 
 bblayers_conf_header:
   meta-k8s-setup: |
