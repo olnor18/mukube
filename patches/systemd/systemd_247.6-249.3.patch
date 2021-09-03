@@ -1,0 +1,4171 @@
+$ git rev-parse hardknott master
+b89bb2651d7c01084c84c40c3095ef93b36807fb
+a5b257006b2c480d86e09909cdafb3c8ba05b863
+$ git diff hardknott..master meta/recipes-core/systemd > systemd_247.6-249.3.patch
+
+diff --git a/meta/recipes-core/systemd/systemd-boot_247.6.bb b/meta/recipes-core/systemd/systemd-boot_249.3.bb
+similarity index 79%
+rename from meta/recipes-core/systemd/systemd-boot_247.6.bb
+rename to meta/recipes-core/systemd/systemd-boot_249.3.bb
+index 249e620f4e..af2be162a3 100644
+--- a/meta/recipes-core/systemd/systemd-boot_247.6.bb
++++ b/meta/recipes-core/systemd/systemd-boot_249.3.bb
+@@ -3,15 +3,15 @@ FILESEXTRAPATHS =. "${FILE_DIRNAME}/systemd:"
+ 
+ require conf/image-uefi.conf
+ 
+-DEPENDS = "intltool-native libcap util-linux gnu-efi gperf-native"
++DEPENDS = "intltool-native libcap util-linux gnu-efi gperf-native python3-jinja2-native"
+ 
+ inherit meson pkgconfig gettext
+ inherit deploy
+ 
+-LDFLAGS_prepend = "${@ " ".join(d.getVar('LD').split()[1:])} "
++LDFLAGS:prepend = "${@ " ".join(d.getVar('LD').split()[1:])} "
+ 
+ do_write_config[vardeps] += "CC OBJCOPY"
+-do_write_config_append() {
++do_write_config:append() {
+     cat >${WORKDIR}/meson-${PN}.cross <<EOF
+ [binaries]
+ efi_cc = ${@meson_array('CC', d)}
+@@ -19,11 +19,14 @@ objcopy = ${@meson_array('OBJCOPY', d)}
+ EOF
+ }
+ 
++# need to use ${HOST_PREFIX} here, otherwise ld.bfd could be used from HOSTTOOLS_NONFATAL
++EFI_LD = "${HOST_PREFIX}ld.bfd"
++
+ EXTRA_OEMESON += "-Defi=true \
+                   -Dgnu-efi=true \
+                   -Defi-includedir=${STAGING_INCDIR}/efi \
+                   -Defi-libdir=${STAGING_LIBDIR} \
+-                  -Defi-ld=${@ d.getVar('LD').split()[0]} \
++                  -Defi-ld=${EFI_LD} \
+                   -Dman=false \
+                   --cross-file ${WORKDIR}/meson-${PN}.cross \
+                   "
+@@ -41,15 +44,15 @@ python __anonymous () {
+     d.setVar("SYSTEMD_BOOT_IMAGE_PREFIX", prefix)
+ }
+ 
+-FILES_${PN} = "${EFI_FILES_PATH}/${SYSTEMD_BOOT_IMAGE}"
++FILES:${PN} = "${EFI_FILES_PATH}/${SYSTEMD_BOOT_IMAGE}"
+ 
+-RDEPENDS_${PN} += "virtual/systemd-bootconf"
++RDEPENDS:${PN} += "virtual/systemd-bootconf"
+ 
+ # Imported from the old gummiboot recipe
+-TUNE_CCARGS_remove = "-mfpmath=sse"
++TUNE_CCARGS:remove = "-mfpmath=sse"
+ 
+ COMPATIBLE_HOST = "(aarch64.*|arm.*|x86_64.*|i.86.*)-linux"
+-COMPATIBLE_HOST_x86-x32 = "null"
++COMPATIBLE_HOST:x86-x32 = "null"
+ 
+ do_compile() {
+ 	ninja \
+@@ -68,3 +71,4 @@ do_deploy () {
+ }
+ 
+ addtask deploy before do_build after do_compile
++
+diff --git a/meta/recipes-core/systemd/systemd-bootconf_1.00.bb b/meta/recipes-core/systemd/systemd-bootconf_1.00.bb
+index d13b8c518f..12c4447f37 100644
+--- a/meta/recipes-core/systemd/systemd-bootconf_1.00.bb
++++ b/meta/recipes-core/systemd/systemd-bootconf_1.00.bb
+@@ -2,7 +2,7 @@ LICENSE = "MIT"
+ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
+ SUMMARY = "Basic systemd-boot configuration files"
+ 
+-RPROVIDES_${PN} += "virtual/systemd-bootconf"
++RPROVIDES:${PN} += "virtual/systemd-bootconf"
+ PACKAGE_ARCH = "${MACHINE_ARCH}"
+ 
+ inherit systemd-boot-cfg
+@@ -12,7 +12,7 @@ S = "${WORKDIR}"
+ LABELS = "boot"
+ 
+ ROOT ?= "root=/dev/sda2"
+-APPEND_append = " ${ROOT}"
++APPEND:append = " ${ROOT}"
+ 
+ python do_configure() {
+     bb.build.exec_func('build_efi_cfg', d)
+@@ -29,4 +29,4 @@ do_install() {
+ 	install *.conf ${D}/boot/loader/entries/
+ }
+ 
+-FILES_${PN} = "/boot/loader/* /boot/loader/entries/*"
++FILES:${PN} = "/boot/loader/* /boot/loader/entries/*"
+diff --git a/meta/recipes-core/systemd/systemd-compat-units.bb b/meta/recipes-core/systemd/systemd-compat-units.bb
+index 361dc1cbb4..f7505f1eb8 100644
+--- a/meta/recipes-core/systemd/systemd-compat-units.bb
++++ b/meta/recipes-core/systemd/systemd-compat-units.bb
+@@ -12,7 +12,7 @@ inherit features_check
+ 
+ INHIBIT_DEFAULT_DEPS = "1"
+ 
+-ALLOW_EMPTY_${PN} = "1"
++ALLOW_EMPTY:${PN} = "1"
+ 
+ REQUIRED_DISTRO_FEATURES = "systemd"
+ 
+@@ -25,7 +25,7 @@ SYSTEMD_DISABLED_SYSV_SERVICES = " \
+   syslog.busybox \
+ "
+ 
+-pkg_postinst_${PN} () {
++pkg_postinst:${PN} () {
+ 
+ 	cd $D${sysconfdir}/init.d  ||  exit 0
+ 
+@@ -46,4 +46,4 @@ pkg_postinst_${PN} () {
+ 	echo
+ }
+ 
+-RDEPENDS_${PN} = "systemd"
++RDEPENDS:${PN} = "systemd"
+diff --git a/meta/recipes-core/systemd/systemd-conf/wired.network b/meta/recipes-core/systemd/systemd-conf/wired.network
+index e7b69970d6..7406287248 100644
+--- a/meta/recipes-core/systemd/systemd-conf/wired.network
++++ b/meta/recipes-core/systemd/systemd-conf/wired.network
+@@ -1,5 +1,6 @@
+ [Match]
+ Type=ether
++Name=!veth*
+ KernelCommandLine=!nfsroot
+ KernelCommandLine=!ip
+ 
+diff --git a/meta/recipes-core/systemd/systemd-conf_247.6.bb b/meta/recipes-core/systemd/systemd-conf_1.0.bb
+similarity index 96%
+rename from meta/recipes-core/systemd/systemd-conf_247.6.bb
+rename to meta/recipes-core/systemd/systemd-conf_1.0.bb
+index ea35e83f4f..61ce7939d3 100644
+--- a/meta/recipes-core/systemd/systemd-conf_247.6.bb
++++ b/meta/recipes-core/systemd/systemd-conf_1.0.bb
+@@ -5,6 +5,8 @@ DefaultTimeoutStartSec setting."
+ LICENSE = "MIT"
+ LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
+ 
++PE = "1"
++
+ PACKAGECONFIG ??= "dhcp-ethernet"
+ PACKAGECONFIG[dhcp-ethernet] = ""
+ 
+@@ -27,13 +29,13 @@ do_install() {
+ }
+ 
+ # Based on change from YP bug 8141, OE commit 5196d7bacaef1076c361adaa2867be31759c1b52
+-do_install_append_qemuall() {
++do_install:append:qemuall() {
+ 	install -D -m0644 ${WORKDIR}/system.conf-qemuall ${D}${systemd_unitdir}/system.conf.d/01-${PN}.conf
+ }
+ 
+ PACKAGE_ARCH = "${MACHINE_ARCH}"
+ 
+-FILES_${PN} = "\
++FILES:${PN} = "\
+     ${systemd_unitdir}/journald.conf.d/ \
+     ${systemd_unitdir}/logind.conf.d/ \
+     ${systemd_unitdir}/system.conf.d/ \
+diff --git a/meta/recipes-core/systemd/systemd-machine-units_1.0.bb b/meta/recipes-core/systemd/systemd-machine-units_1.0.bb
+index 02756f43d7..12f27d6ae3 100644
+--- a/meta/recipes-core/systemd/systemd-machine-units_1.0.bb
++++ b/meta/recipes-core/systemd/systemd-machine-units_1.0.bb
+@@ -8,6 +8,6 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
+ PR = "r19"
+ 
+ inherit systemd
+-SYSTEMD_SERVICE_${PN} = ""
++SYSTEMD_SERVICE:${PN} = ""
+ 
+-ALLOW_EMPTY_${PN} = "1"
++ALLOW_EMPTY:${PN} = "1"
+diff --git a/meta/recipes-core/systemd/systemd-serialgetty.bb b/meta/recipes-core/systemd/systemd-serialgetty.bb
+index 34defeb3b1..92d35ebcf7 100644
+--- a/meta/recipes-core/systemd/systemd-serialgetty.bb
++++ b/meta/recipes-core/systemd/systemd-serialgetty.bb
+@@ -46,7 +46,7 @@ do_install() {
+ }
+ 
+ # This is a machine specific file
+-FILES_${PN} = "${systemd_unitdir}/system/*.service ${sysconfdir}"
++FILES:${PN} = "${systemd_unitdir}/system/*.service ${sysconfdir}"
+ PACKAGE_ARCH = "${MACHINE_ARCH}"
+ 
+-ALLOW_EMPTY_${PN} = "1"
++ALLOW_EMPTY:${PN} = "1"
+diff --git a/meta/recipes-core/systemd/systemd-systemctl/systemctl b/meta/recipes-core/systemd/systemd-systemctl/systemctl
+index de733e255b..e8c3d2d1ee 100755
+--- a/meta/recipes-core/systemd/systemd-systemctl/systemctl
++++ b/meta/recipes-core/systemd/systemd-systemctl/systemctl
+@@ -160,7 +160,9 @@ def add_link(path, target):
+ 
+ 
+ class SystemdUnitNotFoundError(Exception):
+-    pass
++    def __init__(self, path, unit):
++        self.path = path
++        self.unit = unit
+ 
+ 
+ class SystemdUnit():
+@@ -224,7 +226,10 @@ class SystemdUnit():
+ 
+         try:
+             for also in config.get('Install', 'Also'):
+-                SystemdUnit(self.root, also).enable()
++                try:
++                    SystemdUnit(self.root, also).enable()
++                except SystemdUnitNotFoundError as e:
++                    sys.exit("Error: Systemctl also enable issue with  %s (%s)" % (service, e.unit))
+ 
+         except KeyError:
+             pass
+@@ -265,7 +270,10 @@ def preset_all(root):
+         state = presets.state(service)
+ 
+         if state == "enable" or state is None:
+-            SystemdUnit(root, service).enable()
++            try:
++                SystemdUnit(root, service).enable()
++            except SystemdUnitNotFoundError:
++                sys.exit("Error: Systemctl preset_all issue in %s" % service)
+ 
+     # If we populate the systemd links we also create /etc/machine-id, which
+     # allows systemd to boot with the filesystem read-only before generating
+@@ -307,10 +315,16 @@ def main():
+ 
+     if command == "mask":
+         for service in args.service:
+-            SystemdUnit(root, service).mask()
++            try:
++                SystemdUnit(root, service).mask()
++            except SystemdUnitNotFoundError as e:
++                sys.exit("Error: Systemctl main mask issue in %s (%s)" % (service, e.unit))
+     elif command == "enable":
+         for service in args.service:
+-            SystemdUnit(root, service).enable()
++            try:
++                SystemdUnit(root, service).enable()
++            except SystemdUnitNotFoundError as e:
++                sys.exit("Error: Systemctl main enable issue in %s (%s)" % (service, e.unit))
+     elif command == "preset-all":
+         if len(args.service) != 0:
+             sys.exit("Too many arguments.")
+diff --git a/meta/recipes-core/systemd/systemd.inc b/meta/recipes-core/systemd/systemd.inc
+index 7d3b3064ba..05341724f4 100644
+--- a/meta/recipes-core/systemd/systemd.inc
++++ b/meta/recipes-core/systemd/systemd.inc
+@@ -14,8 +14,9 @@ LICENSE = "GPLv2 & LGPLv2.1"
+ LIC_FILES_CHKSUM = "file://LICENSE.GPL2;md5=751419260aa954499f7abaabaa882bbe \
+                     file://LICENSE.LGPL2.1;md5=4fbd65380cdd255951079008b364516c"
+ 
+-SRCREV = "17472dca0160cbe7b807ca648475fd70d0d62fe5"
+-SRCBRANCH = "v247-stable"
+-SRC_URI = "git://github.com/systemd/systemd-stable.git;protocol=git;branch=${SRCBRANCH}"
++SRCREV = "090378dcb1de5ca66900503210e85d63075fa70a"
++SRCBRANCH = "v249-stable"
++SRC_URI = "git://github.com/systemd/systemd-stable.git;protocol=git;branch=${SRCBRANCH} \
++"
+ 
+ S = "${WORKDIR}/git"
+diff --git a/meta/recipes-core/systemd/systemd/0001-analyze-resolve-executable-path-if-it-is-relative.patch b/meta/recipes-core/systemd/systemd/0001-analyze-resolve-executable-path-if-it-is-relative.patch
+deleted file mode 100644
+index fd7f94a61d..0000000000
+--- a/meta/recipes-core/systemd/systemd/0001-analyze-resolve-executable-path-if-it-is-relative.patch
++++ /dev/null
+@@ -1,39 +0,0 @@
+-From b9b7a8e3825f0433e120f7a6d7d5d635a839cab9 Mon Sep 17 00:00:00 2001
+-From: Mingli Yu <mingli.yu@windriver.com>
+-Date: Thu, 21 Jan 2021 06:19:44 +0000
+-Subject: [PATCH] analyze: resolve executable path if it is relative
+-
+-Upstream-Status: Backport [https://github.com/systemd/systemd/commit/f1fb046a985521f7d4a662f02546686ff20b7e5d]
+-
+-Signed-off-by: Mingli Yu <mingli.yu@windriver.com>
+----
+- src/analyze/analyze-verify.c | 7 +++++--
+- 1 file changed, 5 insertions(+), 2 deletions(-)
+-
+-diff --git a/src/analyze/analyze-verify.c b/src/analyze/analyze-verify.c
+-index a9c89173bf..969523df18 100644
+---- a/src/analyze/analyze-verify.c
+-+++ b/src/analyze/analyze-verify.c
+-@@ -115,14 +115,17 @@ static int verify_socket(Unit *u) {
+- }
+- 
+- int verify_executable(Unit *u, const ExecCommand *exec) {
+-+        int r;
+-+
+-         if (!exec)
+-                 return 0;
+- 
+-         if (exec->flags & EXEC_COMMAND_IGNORE_FAILURE)
+-                 return 0;
+- 
+--        if (access(exec->path, X_OK) < 0)
+--                return log_unit_error_errno(u, errno, "Command %s is not executable: %m", exec->path);
+-+        r = find_executable_full(exec->path, false, NULL);
+-+        if (r < 0)
+-+                return log_unit_error_errno(u, r, "Command %s is not executable: %m", exec->path);
+- 
+-         return 0;
+- }
+--- 
+-2.26.2
+-
+diff --git a/meta/recipes-core/systemd/systemd/0001-binfmt-Don-t-install-dependency-links-at-install-tim.patch b/meta/recipes-core/systemd/systemd/0001-binfmt-Don-t-install-dependency-links-at-install-tim.patch
+index 8dd22eeb7b..d3af734e06 100644
+--- a/meta/recipes-core/systemd/systemd/0001-binfmt-Don-t-install-dependency-links-at-install-tim.patch
++++ b/meta/recipes-core/systemd/systemd/0001-binfmt-Don-t-install-dependency-links-at-install-tim.patch
+@@ -1,4 +1,4 @@
+-From 564830719be2017c4953589d50f21a9e856a4ecc Mon Sep 17 00:00:00 2001
++From 08cd165f5db0e68a499b80c4b1744a4206948259 Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Thu, 21 Feb 2019 16:23:24 +0800
+ Subject: [PATCH] binfmt: Don't install dependency links at install time for
+@@ -25,11 +25,11 @@ Signed-off-by: Scott Murray <scott.murray@konsulko.com>
+  units/systemd-binfmt.service.in         | 4 ++++
+  3 files changed, 9 insertions(+), 4 deletions(-)
+ 
+-Index: systemd-stable/units/meson.build
+-===================================================================
+---- systemd-stable.orig/units/meson.build
+-+++ systemd-stable/units/meson.build
+-@@ -55,8 +55,7 @@ units = [
++diff --git a/units/meson.build b/units/meson.build
++index 17e9ead9c1..e5502be620 100644
++--- a/units/meson.build
+++++ b/units/meson.build
++@@ -59,8 +59,7 @@ units = [
+          ['poweroff.target',                     '',
+           (with_runlevels ? 'runlevel0.target' : '')],
+          ['printer.target',                      ''],
+@@ -39,9 +39,9 @@ Index: systemd-stable/units/meson.build
+          ['proc-sys-fs-binfmt_misc.mount',       'ENABLE_BINFMT'],
+          ['reboot.target',                       '',
+           'ctrl-alt-del.target' + (with_runlevels ? ' runlevel6.target' : '')],
+-@@ -166,8 +165,7 @@ in_units = [
+-         ['rc-local.service',                     'HAVE_SYSV_COMPAT'],
++@@ -178,8 +177,7 @@ in_units = [
+          ['rescue.service',                       ''],
++         ['serial-getty@.service',                ''],
+          ['systemd-backlight@.service',           'ENABLE_BACKLIGHT'],
+ -        ['systemd-binfmt.service',               'ENABLE_BINFMT',
+ -         'sysinit.target.wants/'],
+@@ -49,21 +49,21 @@ Index: systemd-stable/units/meson.build
+          ['systemd-bless-boot.service',           'ENABLE_EFI HAVE_BLKID'],
+          ['systemd-boot-check-no-failures.service', ''],
+          ['systemd-coredump@.service',            'ENABLE_COREDUMP'],
+-Index: systemd-stable/units/proc-sys-fs-binfmt_misc.automount
+-===================================================================
+---- systemd-stable.orig/units/proc-sys-fs-binfmt_misc.automount
+-+++ systemd-stable/units/proc-sys-fs-binfmt_misc.automount
+-@@ -18,3 +18,6 @@ ConditionPathIsReadWrite=/proc/sys/
++diff --git a/units/proc-sys-fs-binfmt_misc.automount b/units/proc-sys-fs-binfmt_misc.automount
++index 172c8757ab..f65d8930c6 100644
++--- a/units/proc-sys-fs-binfmt_misc.automount
+++++ b/units/proc-sys-fs-binfmt_misc.automount
++@@ -19,3 +19,6 @@ ConditionPathIsReadWrite=/proc/sys/
+  
+  [Automount]
+  Where=/proc/sys/fs/binfmt_misc
+ +
+ +[Install]
+ +WantedBy=sysinit.target
+-Index: systemd-stable/units/systemd-binfmt.service.in
+-===================================================================
+---- systemd-stable.orig/units/systemd-binfmt.service.in
+-+++ systemd-stable/units/systemd-binfmt.service.in
++diff --git a/units/systemd-binfmt.service.in b/units/systemd-binfmt.service.in
++index fdafce7ff7..4efc05e495 100644
++--- a/units/systemd-binfmt.service.in
+++++ b/units/systemd-binfmt.service.in
+ @@ -14,6 +14,7 @@ Documentation=https://www.kernel.org/doc/html/latest/admin-guide/binfmt-misc.htm
+  Documentation=https://www.freedesktop.org/wiki/Software/systemd/APIFileSystems
+  DefaultDependencies=no
+@@ -73,8 +73,8 @@ Index: systemd-stable/units/systemd-binfmt.service.in
+  After=proc-sys-fs-binfmt_misc.mount
+  Before=sysinit.target shutdown.target
+ @@ -30,3 +31,6 @@ RemainAfterExit=yes
+- ExecStart=@rootlibexecdir@/systemd-binfmt
+- ExecStop=@rootlibexecdir@/systemd-binfmt --unregister
++ ExecStart={{ROOTLIBEXECDIR}}/systemd-binfmt
++ ExecStop={{ROOTLIBEXECDIR}}/systemd-binfmt --unregister
+  TimeoutSec=90s
+ +
+ +[Install]
+diff --git a/meta/recipes-core/systemd/systemd/0001-logind-Restore-chvt-as-non-root-user-without-polkit.patch b/meta/recipes-core/systemd/systemd/0001-logind-Restore-chvt-as-non-root-user-without-polkit.patch
+deleted file mode 100644
+index 89ef39bc3e..0000000000
+--- a/meta/recipes-core/systemd/systemd/0001-logind-Restore-chvt-as-non-root-user-without-polkit.patch
++++ /dev/null
+@@ -1,227 +0,0 @@
+-From 150d9cade6d475570395cb418b824524dead9577 Mon Sep 17 00:00:00 2001
+-From: Joshua Watt <JPEWhacker@gmail.com>
+-Date: Fri, 30 Oct 2020 08:15:43 -0500
+-Subject: [PATCH] logind: Restore chvt as non-root user without polkit
+-
+-4acf0cfd2f ("logind: check PolicyKit before allowing VT switch") broke
+-the ability to write user sessions that run graphical sessions (e.g.
+-weston/X11). This was partially amended in 19bb87fbfa ("login: allow
+-non-console sessions to change vt") by changing the default PolicyKit
+-policy so that non-root users are again allowed to switch the VT. This
+-makes the policy when PolKit is not enabled (as on many embedded
+-systems) match the default PolKit policy and allows launching graphical
+-sessions as a non-root user.
+-
+-Closes #17473
+----
+- src/login/logind-dbus.c         | 11 ++-------
+- src/login/logind-polkit.c       | 26 +++++++++++++++++++++
+- src/login/logind-polkit.h       | 10 ++++++++
+- src/login/logind-seat-dbus.c    | 41 ++++-----------------------------
+- src/login/logind-session-dbus.c | 11 ++-------
+- src/login/meson.build           |  1 +
+- 6 files changed, 46 insertions(+), 54 deletions(-)
+- create mode 100644 src/login/logind-polkit.c
+- create mode 100644 src/login/logind-polkit.h
+-
+-diff --git a/src/login/logind-dbus.c b/src/login/logind-dbus.c
+-index 0f83ed99bc..a3765d88ba 100644
+---- a/src/login/logind-dbus.c
+-+++ b/src/login/logind-dbus.c
+-@@ -30,6 +30,7 @@
+- #include "format-util.h"
+- #include "fs-util.h"
+- #include "logind-dbus.h"
+-+#include "logind-polkit.h"
+- #include "logind-seat-dbus.h"
+- #include "logind-session-dbus.h"
+- #include "logind-user-dbus.h"
+-@@ -1047,15 +1048,7 @@ static int method_activate_session_on_seat(sd_bus_message *message, void *userda
+-                 return sd_bus_error_setf(error, BUS_ERROR_SESSION_NOT_ON_SEAT,
+-                                          "Session %s not on seat %s", session_name, seat_name);
+- 
+--        r = bus_verify_polkit_async(
+--                        message,
+--                        CAP_SYS_ADMIN,
+--                        "org.freedesktop.login1.chvt",
+--                        NULL,
+--                        false,
+--                        UID_INVALID,
+--                        &m->polkit_registry,
+--                        error);
+-+        r = check_polkit_chvt(message, m, error);
+-         if (r < 0)
+-                 return r;
+-         if (r == 0)
+-diff --git a/src/login/logind-polkit.c b/src/login/logind-polkit.c
+-new file mode 100644
+-index 0000000000..9072570cc6
+---- /dev/null
+-+++ b/src/login/logind-polkit.c
+-@@ -0,0 +1,26 @@
+-+/* SPDX-License-Identifier: LGPL-2.1+ */
+-+
+-+#include "bus-polkit.h"
+-+#include "logind-polkit.h"
+-+#include "missing_capability.h"
+-+#include "user-util.h"
+-+
+-+int check_polkit_chvt(sd_bus_message *message, Manager *manager, sd_bus_error *error) {
+-+#if ENABLE_POLKIT
+-+        return bus_verify_polkit_async(
+-+                        message,
+-+                        CAP_SYS_ADMIN,
+-+                        "org.freedesktop.login1.chvt",
+-+                        NULL,
+-+                        false,
+-+                        UID_INVALID,
+-+                        &manager->polkit_registry,
+-+                        error);
+-+#else
+-+        /* Allow chvt when polkit is not present. This allows a service to start a graphical session as a
+-+         * non-root user when polkit is not compiled in, matching the default polkit policy */
+-+        return 1;
+-+#endif
+-+}
+-+
+-+
+-diff --git a/src/login/logind-polkit.h b/src/login/logind-polkit.h
+-new file mode 100644
+-index 0000000000..476c077a8a
+---- /dev/null
+-+++ b/src/login/logind-polkit.h
+-@@ -0,0 +1,10 @@
+-+/* SPDX-License-Identifier: LGPL-2.1+ */
+-+#pragma once
+-+
+-+#include "sd-bus.h"
+-+
+-+#include "bus-object.h"
+-+#include "logind.h"
+-+
+-+int check_polkit_chvt(sd_bus_message *message, Manager *manager, sd_bus_error *error);
+-+
+-diff --git a/src/login/logind-seat-dbus.c b/src/login/logind-seat-dbus.c
+-index a945132284..f22e9e2734 100644
+---- a/src/login/logind-seat-dbus.c
+-+++ b/src/login/logind-seat-dbus.c
+-@@ -9,6 +9,7 @@
+- #include "bus-polkit.h"
+- #include "bus-util.h"
+- #include "logind-dbus.h"
+-+#include "logind-polkit.h"
+- #include "logind-seat-dbus.h"
+- #include "logind-seat.h"
+- #include "logind-session-dbus.h"
+-@@ -179,15 +180,7 @@ static int method_activate_session(sd_bus_message *message, void *userdata, sd_b
+-         if (session->seat != s)
+-                 return sd_bus_error_setf(error, BUS_ERROR_SESSION_NOT_ON_SEAT, "Session %s not on seat %s", name, s->id);
+- 
+--        r = bus_verify_polkit_async(
+--                        message,
+--                        CAP_SYS_ADMIN,
+--                        "org.freedesktop.login1.chvt",
+--                        NULL,
+--                        false,
+--                        UID_INVALID,
+--                        &s->manager->polkit_registry,
+--                        error);
+-+        r = check_polkit_chvt(message, s->manager, error);
+-         if (r < 0)
+-                 return r;
+-         if (r == 0)
+-@@ -215,15 +208,7 @@ static int method_switch_to(sd_bus_message *message, void *userdata, sd_bus_erro
+-         if (to <= 0)
+-                 return sd_bus_error_setf(error, SD_BUS_ERROR_INVALID_ARGS, "Invalid virtual terminal");
+- 
+--        r = bus_verify_polkit_async(
+--                        message,
+--                        CAP_SYS_ADMIN,
+--                        "org.freedesktop.login1.chvt",
+--                        NULL,
+--                        false,
+--                        UID_INVALID,
+--                        &s->manager->polkit_registry,
+--                        error);
+-+        r = check_polkit_chvt(message, s->manager, error);
+-         if (r < 0)
+-                 return r;
+-         if (r == 0)
+-@@ -243,15 +228,7 @@ static int method_switch_to_next(sd_bus_message *message, void *userdata, sd_bus
+-         assert(message);
+-         assert(s);
+- 
+--        r = bus_verify_polkit_async(
+--                        message,
+--                        CAP_SYS_ADMIN,
+--                        "org.freedesktop.login1.chvt",
+--                        NULL,
+--                        false,
+--                        UID_INVALID,
+--                        &s->manager->polkit_registry,
+--                        error);
+-+        r = check_polkit_chvt(message, s->manager, error);
+-         if (r < 0)
+-                 return r;
+-         if (r == 0)
+-@@ -271,15 +248,7 @@ static int method_switch_to_previous(sd_bus_message *message, void *userdata, sd
+-         assert(message);
+-         assert(s);
+- 
+--        r = bus_verify_polkit_async(
+--                        message,
+--                        CAP_SYS_ADMIN,
+--                        "org.freedesktop.login1.chvt",
+--                        NULL,
+--                        false,
+--                        UID_INVALID,
+--                        &s->manager->polkit_registry,
+--                        error);
+-+        r = check_polkit_chvt(message, s->manager, error);
+-         if (r < 0)
+-                 return r;
+-         if (r == 0)
+-diff --git a/src/login/logind-session-dbus.c b/src/login/logind-session-dbus.c
+-index ccc5ac8df2..57c8a4e900 100644
+---- a/src/login/logind-session-dbus.c
+-+++ b/src/login/logind-session-dbus.c
+-@@ -11,6 +11,7 @@
+- #include "fd-util.h"
+- #include "logind-brightness.h"
+- #include "logind-dbus.h"
+-+#include "logind-polkit.h"
+- #include "logind-seat-dbus.h"
+- #include "logind-session-dbus.h"
+- #include "logind-session-device.h"
+-@@ -192,15 +193,7 @@ int bus_session_method_activate(sd_bus_message *message, void *userdata, sd_bus_
+-         assert(message);
+-         assert(s);
+- 
+--        r = bus_verify_polkit_async(
+--                        message,
+--                        CAP_SYS_ADMIN,
+--                        "org.freedesktop.login1.chvt",
+--                        NULL,
+--                        false,
+--                        UID_INVALID,
+--                        &s->manager->polkit_registry,
+--                        error);
+-+        r = check_polkit_chvt(message, s->manager, error);
+-         if (r < 0)
+-                 return r;
+-         if (r == 0)
+-diff --git a/src/login/meson.build b/src/login/meson.build
+-index 0a7d3d5440..7e46be2add 100644
+---- a/src/login/meson.build
+-+++ b/src/login/meson.build
+-@@ -26,6 +26,7 @@ liblogind_core_sources = files('''
+-         logind-device.h
+-         logind-inhibit.c
+-         logind-inhibit.h
+-+        logind-polkit.c
+-         logind-seat-dbus.c
+-         logind-seat-dbus.h
+-         logind-seat.c
+--- 
+-2.28.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0001-sd-dhcp-client-check-error-earlier-and-reduce-indent.patch b/meta/recipes-core/systemd/systemd/0001-sd-dhcp-client-check-error-earlier-and-reduce-indent.patch
+deleted file mode 100644
+index ff877d9175..0000000000
+--- a/meta/recipes-core/systemd/systemd/0001-sd-dhcp-client-check-error-earlier-and-reduce-indent.patch
++++ /dev/null
+@@ -1,172 +0,0 @@
+-From ac6c7f2d2389c5c0ae90554a58f1c75f60cc8e5a Mon Sep 17 00:00:00 2001
+-From: Yu Watanabe <watanabe.yu+github@gmail.com>
+-Date: Thu, 24 Jun 2021 00:48:23 +0900
+-Subject: [PATCH] sd-dhcp-client: check error earlier and reduce indentation
+-
+-Upstream-Status: Backport
+-CVE: CVE-2020-13529
+-Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+----
+- src/libsystemd-network/sd-dhcp-client.c | 128 ++++++++++++------------
+- 1 file changed, 64 insertions(+), 64 deletions(-)
+-
+-diff --git a/src/libsystemd-network/sd-dhcp-client.c b/src/libsystemd-network/sd-dhcp-client.c
+-index d472fcd941..86bc3c6181 100644
+---- a/src/libsystemd-network/sd-dhcp-client.c
+-+++ b/src/libsystemd-network/sd-dhcp-client.c
+-@@ -1770,21 +1770,21 @@ static int client_handle_message(sd_dhcp_client *client, DHCPMessage *message, i
+-         case DHCP_STATE_SELECTING:
+- 
+-                 r = client_handle_offer(client, message, len);
+--                if (r >= 0) {
+-+                if (r == -ENOMSG)
+-+                        return 0; /* invalid message, let's ignore it */
+-+                if (r < 0)
+-+                        goto error;
+- 
+--                        client->state = DHCP_STATE_REQUESTING;
+--                        client->attempt = 0;
+-+                client->state = DHCP_STATE_REQUESTING;
+-+                client->attempt = 0;
+- 
+--                        r = event_reset_time(client->event, &client->timeout_resend,
+--                                             clock_boottime_or_monotonic(),
+--                                             0, 0,
+--                                             client_timeout_resend, client,
+--                                             client->event_priority, "dhcp4-resend-timer", true);
+--                        if (r < 0)
+--                                goto error;
+--                } else if (r == -ENOMSG)
+--                        /* invalid message, let's ignore it */
+--                        return 0;
+-+                r = event_reset_time(client->event, &client->timeout_resend,
+-+                                     clock_boottime_or_monotonic(),
+-+                                     0, 0,
+-+                                     client_timeout_resend, client,
+-+                                     client->event_priority, "dhcp4-resend-timer", true);
+-+                if (r < 0)
+-+                        goto error;
+- 
+-                 break;
+- 
+-@@ -1794,47 +1794,9 @@ static int client_handle_message(sd_dhcp_client *client, DHCPMessage *message, i
+-         case DHCP_STATE_REBINDING:
+- 
+-                 r = client_handle_ack(client, message, len);
+--                if (r >= 0) {
+--                        client->start_delay = 0;
+--                        (void) event_source_disable(client->timeout_resend);
+--                        client->receive_message =
+--                                sd_event_source_unref(client->receive_message);
+--                        client->fd = safe_close(client->fd);
+--
+--                        if (IN_SET(client->state, DHCP_STATE_REQUESTING,
+--                                   DHCP_STATE_REBOOTING))
+--                                notify_event = SD_DHCP_CLIENT_EVENT_IP_ACQUIRE;
+--                        else if (r != SD_DHCP_CLIENT_EVENT_IP_ACQUIRE)
+--                                notify_event = r;
+--
+--                        client->state = DHCP_STATE_BOUND;
+--                        client->attempt = 0;
+--
+--                        client->last_addr = client->lease->address;
+--
+--                        r = client_set_lease_timeouts(client);
+--                        if (r < 0) {
+--                                log_dhcp_client(client, "could not set lease timeouts");
+--                                goto error;
+--                        }
+--
+--                        r = dhcp_network_bind_udp_socket(client->ifindex, client->lease->address, client->port, client->ip_service_type);
+--                        if (r < 0) {
+--                                log_dhcp_client(client, "could not bind UDP socket");
+--                                goto error;
+--                        }
+--
+--                        client->fd = r;
+--
+--                        client_initialize_io_events(client, client_receive_message_udp);
+--
+--                        if (notify_event) {
+--                                client_notify(client, notify_event);
+--                                if (client->state == DHCP_STATE_STOPPED)
+--                                        return 0;
+--                        }
+--
+--                } else if (r == -EADDRNOTAVAIL) {
+-+                if (r == -ENOMSG)
+-+                        return 0; /* invalid message, let's ignore it */
+-+                if (r == -EADDRNOTAVAIL) {
+-                         /* got a NAK, let's restart the client */
+-                         client_notify(client, SD_DHCP_CLIENT_EVENT_EXPIRED);
+- 
+-@@ -1853,21 +1815,59 @@ static int client_handle_message(sd_dhcp_client *client, DHCPMessage *message, i
+-                                                     RESTART_AFTER_NAK_MIN_USEC, RESTART_AFTER_NAK_MAX_USEC);
+- 
+-                         return 0;
+--                } else if (r == -ENOMSG)
+--                        /* invalid message, let's ignore it */
+--                        return 0;
+-+                }
+-+                if (r < 0)
+-+                        goto error;
+-+
+-+                client->start_delay = 0;
+-+                (void) event_source_disable(client->timeout_resend);
+-+                client->receive_message = sd_event_source_unref(client->receive_message);
+-+                client->fd = safe_close(client->fd);
+-+
+-+                if (IN_SET(client->state, DHCP_STATE_REQUESTING, DHCP_STATE_REBOOTING))
+-+                        notify_event = SD_DHCP_CLIENT_EVENT_IP_ACQUIRE;
+-+                else if (r != SD_DHCP_CLIENT_EVENT_IP_ACQUIRE)
+-+                        notify_event = r;
+-+
+-+                client->state = DHCP_STATE_BOUND;
+-+                client->attempt = 0;
+-+
+-+                client->last_addr = client->lease->address;
+-+
+-+                r = client_set_lease_timeouts(client);
+-+                if (r < 0) {
+-+                        log_dhcp_client(client, "could not set lease timeouts");
+-+                        goto error;
+-+                }
+-+
+-+                r = dhcp_network_bind_udp_socket(client->ifindex, client->lease->address, client->port, client->ip_service_type);
+-+                if (r < 0) {
+-+                        log_dhcp_client(client, "could not bind UDP socket");
+-+                        goto error;
+-+                }
+-+
+-+                client->fd = r;
+-+
+-+                client_initialize_io_events(client, client_receive_message_udp);
+-+
+-+                if (notify_event) {
+-+                        client_notify(client, notify_event);
+-+                        if (client->state == DHCP_STATE_STOPPED)
+-+                                return 0;
+-+                }
+- 
+-                 break;
+- 
+-         case DHCP_STATE_BOUND:
+-                 r = client_handle_forcerenew(client, message, len);
+--                if (r >= 0) {
+--                        r = client_timeout_t1(NULL, 0, client);
+--                        if (r < 0)
+--                                goto error;
+--                } else if (r == -ENOMSG)
+--                        /* invalid message, let's ignore it */
+--                        return 0;
+-+                if (r == -ENOMSG)
+-+                        return 0; /* invalid message, let's ignore it */
+-+                if (r < 0)
+-+                        goto error;
+-+
+-+                r = client_timeout_t1(NULL, 0, client);
+-+                if (r < 0)
+-+                        goto error;
+- 
+-                 break;
+- 
+diff --git a/meta/recipes-core/systemd/systemd/0001-test-parse-argument-Include-signal.h.patch b/meta/recipes-core/systemd/systemd/0001-test-parse-argument-Include-signal.h.patch
+new file mode 100644
+index 0000000000..3af1daac9c
+--- /dev/null
++++ b/meta/recipes-core/systemd/systemd/0001-test-parse-argument-Include-signal.h.patch
+@@ -0,0 +1,29 @@
++From 1adde6721ead386ccee6efe48038d6944b96319a Mon Sep 17 00:00:00 2001
++From: Khem Raj <raj.khem@gmail.com>
++Date: Mon, 24 May 2021 18:26:27 -0700
++Subject: [PATCH] test-parse-argument: Include signal.h
++
++Fixes
++src/test/test-parse-argument.c:49:29: error: use of undeclared identifier 'SIGABRT'
++
++Upstream-Status: Submitted [https://github.com/systemd/systemd/pull/19718]
++Signed-off-by: Khem Raj <raj.khem@gmail.com>
++---
++ src/test/test-parse-argument.c | 1 +
++ 1 file changed, 1 insertion(+)
++
++diff --git a/src/test/test-parse-argument.c b/src/test/test-parse-argument.c
++index 4081a9f25a..820d69f092 100644
++--- a/src/test/test-parse-argument.c
+++++ b/src/test/test-parse-argument.c
++@@ -3,6 +3,7 @@
++ #include "parse-argument.h"
++ #include "stdio-util.h"
++ #include "tests.h"
+++#include <signal.h>
++ 
++ static void test_parse_json_argument(void) {
++         log_info("/* %s */", __func__);
++-- 
++2.31.1
++
+diff --git a/meta/recipes-core/systemd/systemd/0002-don-t-use-glibc-specific-qsort_r.patch b/meta/recipes-core/systemd/systemd/0002-don-t-use-glibc-specific-qsort_r.patch
+index d856bcb583..15fa0c4546 100644
+--- a/meta/recipes-core/systemd/systemd/0002-don-t-use-glibc-specific-qsort_r.patch
++++ b/meta/recipes-core/systemd/systemd/0002-don-t-use-glibc-specific-qsort_r.patch
+@@ -1,7 +1,7 @@
+-From 66ece0b870b3a34fdabc48b88437e6cc354e9fce Mon Sep 17 00:00:00 2001
++From 40acdb90031cfeb7140cee5205bce24f8c91d857 Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Mon, 25 Feb 2019 13:41:41 +0800
+-Subject: [PATCH 02/26] don't use glibc-specific qsort_r
++Subject: [PATCH] don't use glibc-specific qsort_r
+ 
+ Upstream-Status: Inappropriate [musl specific]
+ 
+@@ -12,21 +12,21 @@ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+ Signed-off-by: Andrej Valek <andrej.valek@siemens.com>
+ [Rebased for v247]
+ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
++
+ ---
+- src/basic/sort-util.h              | 14 ------------
+- src/libsystemd/sd-hwdb/hwdb-util.c | 19 +++++++++++-----
+- src/shared/format-table.c          | 36 ++++++++++++++++++++----------
++ src/basic/sort-util.h     | 14 --------------
++ src/shared/format-table.c | 36 ++++++++++++++++++++++++------------
++ src/shared/hwdb-util.c    | 19 ++++++++++++++-----
+  3 files changed, 38 insertions(+), 31 deletions(-)
+ 
+ diff --git a/src/basic/sort-util.h b/src/basic/sort-util.h
+-index 1d194a1f04..3394c9eb72 100644
++index 49586a4a24..d92a5ab0ed 100644
+ --- a/src/basic/sort-util.h
+ +++ b/src/basic/sort-util.h
+-@@ -54,17 +54,3 @@ static inline void _qsort_safe(void *base, size_t nmemb, size_t size, __compar_f
+-                 int (*_func_)(const typeof(p[0])*, const typeof(p[0])*) = func; \
++@@ -55,18 +55,4 @@ static inline void _qsort_safe(void *base, size_t nmemb, size_t size, __compar_f
+                  _qsort_safe((p), (n), sizeof((p)[0]), (__compar_fn_t) _func_); \
+          })
+--
++ 
+ -static inline void qsort_r_safe(void *base, size_t nmemb, size_t size, __compar_d_fn_t compar, void *userdata) {
+ -        if (nmemb <= 1)
+ -                return;
+@@ -40,55 +40,13 @@ index 1d194a1f04..3394c9eb72 100644
+ -                int (*_func_)(const typeof(p[0])*, const typeof(p[0])*, typeof(userdata)) = func; \
+ -                qsort_r_safe((p), (n), sizeof((p)[0]), (__compar_d_fn_t) _func_, userdata); \
+ -        })
+-diff --git a/src/libsystemd/sd-hwdb/hwdb-util.c b/src/libsystemd/sd-hwdb/hwdb-util.c
+-index 4c94ba9c88..95495dba6d 100644
+---- a/src/libsystemd/sd-hwdb/hwdb-util.c
+-+++ b/src/libsystemd/sd-hwdb/hwdb-util.c
+-@@ -126,9 +126,13 @@ static void trie_free(struct trie *trie) {
+- 
+- DEFINE_TRIVIAL_CLEANUP_FUNC(struct trie*, trie_free);
+- 
+--static int trie_values_cmp(const struct trie_value_entry *a, const struct trie_value_entry *b, struct trie *trie) {
+--        return strcmp(trie->strings->buf + a->key_off,
+--                      trie->strings->buf + b->key_off);
+-+static struct trie *trie_node_add_value_trie;
+-+static int trie_values_cmp(const void *v1, const void *v2) {
+-+        const struct trie_value_entry *a = v1;
+-+        const struct trie_value_entry *b = v2;
+-+
+-+        return strcmp(trie_node_add_value_trie->strings->buf + a->key_off,
+-+                      trie_node_add_value_trie->strings->buf + b->key_off);
+- }
+- 
+- static int trie_node_add_value(struct trie *trie, struct trie_node *node,
+-@@ -156,7 +160,10 @@ static int trie_node_add_value(struct trie *trie, struct trie_node *node,
+-                         .value_off = v,
+-                 };
+- 
+--                val = typesafe_bsearch_r(&search, node->values, node->values_count, trie_values_cmp, trie);
+-+                trie_node_add_value_trie = trie;
+-+                val = bsearch(&search, node->values, node->values_count, sizeof(struct trie_value_entry), trie_values_cmp);
+-+                trie_node_add_value_trie = NULL;
+-+
+-                 if (val) {
+-                         /* At this point we have 2 identical properties on the same match-string.
+-                          * Since we process files in order, we just replace the previous value. */
+-@@ -182,7 +189,9 @@ static int trie_node_add_value(struct trie *trie, struct trie_node *node,
+-                 .line_number = line_number,
+-         };
+-         node->values_count++;
+--        typesafe_qsort_r(node->values, node->values_count, trie_values_cmp, trie);
+-+        trie_node_add_value_trie = trie;
+-+        qsort(node->values, node->values_count, sizeof(struct trie_value_entry), trie_values_cmp);
+-+        trie_node_add_value_trie = NULL;
+-         return 0;
+- }
+- 
++-
++ int cmp_int(const int *a, const int *b);
+ diff --git a/src/shared/format-table.c b/src/shared/format-table.c
+-index a13a198b7a..bce10bc607 100644
++index 4c4e4593d8..17b329f315 100644
+ --- a/src/shared/format-table.c
+ +++ b/src/shared/format-table.c
+-@@ -1243,30 +1243,32 @@ static int cell_data_compare(TableData *a, size_t index_a, TableData *b, size_t
++@@ -1282,30 +1282,32 @@ static int cell_data_compare(TableData *a, size_t index_a, TableData *b, size_t
+          return CMP(index_a, index_b);
+  }
+  
+@@ -131,7 +89,7 @@ index a13a198b7a..bce10bc607 100644
+          }
+  
+          /* Order identical lines by the order there were originally added in */
+-@@ -1844,7 +1846,12 @@ int table_print(Table *t, FILE *f) {
++@@ -1944,7 +1946,12 @@ int table_print(Table *t, FILE *f) {
+                  for (size_t i = 0; i < n_rows; i++)
+                          sorted[i] = i * t->n_columns;
+  
+@@ -145,7 +103,7 @@ index a13a198b7a..bce10bc607 100644
+          }
+  
+          if (t->display_map)
+-@@ -2440,7 +2447,12 @@ int table_to_json(Table *t, JsonVariant **ret) {
++@@ -2572,7 +2579,12 @@ int table_to_json(Table *t, JsonVariant **ret) {
+                  for (size_t i = 0; i < n_rows; i++)
+                          sorted[i] = i * t->n_columns;
+  
+@@ -159,6 +117,47 @@ index a13a198b7a..bce10bc607 100644
+          }
+  
+          if (t->display_map)
+--- 
+-2.27.0
+-
++diff --git a/src/shared/hwdb-util.c b/src/shared/hwdb-util.c
++index d7626aed95..2003fac7c3 100644
++--- a/src/shared/hwdb-util.c
+++++ b/src/shared/hwdb-util.c
++@@ -127,9 +127,13 @@ static struct trie* trie_free(struct trie *trie) {
++ 
++ DEFINE_TRIVIAL_CLEANUP_FUNC(struct trie*, trie_free);
++ 
++-static int trie_values_cmp(const struct trie_value_entry *a, const struct trie_value_entry *b, struct trie *trie) {
++-        return strcmp(trie->strings->buf + a->key_off,
++-                      trie->strings->buf + b->key_off);
+++static struct trie *trie_node_add_value_trie;
+++static int trie_values_cmp(const void *v1, const void *v2) {
+++        const struct trie_value_entry *a = v1;
+++        const struct trie_value_entry *b = v2;
+++
+++        return strcmp(trie_node_add_value_trie->strings->buf + a->key_off,
+++                      trie_node_add_value_trie->strings->buf + b->key_off);
++ }
++ 
++ static int trie_node_add_value(struct trie *trie, struct trie_node *node,
++@@ -157,7 +161,10 @@ static int trie_node_add_value(struct trie *trie, struct trie_node *node,
++                         .value_off = v,
++                 };
++ 
++-                val = typesafe_bsearch_r(&search, node->values, node->values_count, trie_values_cmp, trie);
+++                trie_node_add_value_trie = trie;
+++                val = bsearch(&search, node->values, node->values_count, sizeof(struct trie_value_entry), trie_values_cmp);
+++                trie_node_add_value_trie = NULL;
+++
++                 if (val) {
++                         /* At this point we have 2 identical properties on the same match-string.
++                          * Since we process files in order, we just replace the previous value. */
++@@ -183,7 +190,9 @@ static int trie_node_add_value(struct trie *trie, struct trie_node *node,
++                 .line_number = line_number,
++         };
++         node->values_count++;
++-        typesafe_qsort_r(node->values, node->values_count, trie_values_cmp, trie);
+++        trie_node_add_value_trie = trie;
+++        qsort(node->values, node->values_count, sizeof(struct trie_value_entry), trie_values_cmp);
+++        trie_node_add_value_trie = NULL;
++         return 0;
++ }
++ 
+diff --git a/meta/recipes-core/systemd/systemd/0002-sd-dhcp-client-shorten-code-a-bit.patch b/meta/recipes-core/systemd/systemd/0002-sd-dhcp-client-shorten-code-a-bit.patch
+deleted file mode 100644
+index 41d0c7b1e4..0000000000
+--- a/meta/recipes-core/systemd/systemd/0002-sd-dhcp-client-shorten-code-a-bit.patch
++++ /dev/null
+@@ -1,66 +0,0 @@
+-From 875f3773e383d99e7d43020f02acad7681a05914 Mon Sep 17 00:00:00 2001
+-From: Yu Watanabe <watanabe.yu+github@gmail.com>
+-Date: Thu, 24 Jun 2021 00:51:52 +0900
+-Subject: [PATCH] sd-dhcp-client: shorten code a bit
+-
+-Upstream-Status: Backport
+-CVE: CVE-2020-13529
+-Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+----
+- src/libsystemd-network/sd-dhcp-client.c | 13 ++++---------
+- 1 file changed, 4 insertions(+), 9 deletions(-)
+-
+-diff --git a/src/libsystemd-network/sd-dhcp-client.c b/src/libsystemd-network/sd-dhcp-client.c
+-index 86bc3c6181..ef3a7d2c6b 100644
+---- a/src/libsystemd-network/sd-dhcp-client.c
+-+++ b/src/libsystemd-network/sd-dhcp-client.c
+-@@ -1760,7 +1760,7 @@ static int client_set_lease_timeouts(sd_dhcp_client *client) {
+- static int client_handle_message(sd_dhcp_client *client, DHCPMessage *message, int len) {
+-         DHCP_CLIENT_DONT_DESTROY(client);
+-         char time_string[FORMAT_TIMESPAN_MAX];
+--        int r = 0, notify_event = 0;
+-+        int r, notify_event = 0;
+- 
+-         assert(client);
+-         assert(client->event);
+-@@ -1783,9 +1783,6 @@ static int client_handle_message(sd_dhcp_client *client, DHCPMessage *message, i
+-                                      0, 0,
+-                                      client_timeout_resend, client,
+-                                      client->event_priority, "dhcp4-resend-timer", true);
+--                if (r < 0)
+--                        goto error;
+--
+-                 break;
+- 
+-         case DHCP_STATE_REBOOTING:
+-@@ -1813,7 +1810,6 @@ static int client_handle_message(sd_dhcp_client *client, DHCPMessage *message, i
+- 
+-                         client->start_delay = CLAMP(client->start_delay * 2,
+-                                                     RESTART_AFTER_NAK_MIN_USEC, RESTART_AFTER_NAK_MAX_USEC);
+--
+-                         return 0;
+-                 }
+-                 if (r < 0)
+-@@ -1866,19 +1862,18 @@ static int client_handle_message(sd_dhcp_client *client, DHCPMessage *message, i
+-                         goto error;
+- 
+-                 r = client_timeout_t1(NULL, 0, client);
+--                if (r < 0)
+--                        goto error;
+--
+-                 break;
+- 
+-         case DHCP_STATE_INIT:
+-         case DHCP_STATE_INIT_REBOOT:
+--
+-+                r = 0;
+-                 break;
+- 
+-         case DHCP_STATE_STOPPED:
+-                 r = -EINVAL;
+-                 goto error;
+-+        default:
+-+                assert_not_reached("invalid state");
+-         }
+- 
+- error:
+diff --git a/meta/recipes-core/systemd/systemd/0003-missing_type.h-add-__compare_fn_t-and-comparison_fn_.patch b/meta/recipes-core/systemd/systemd/0003-missing_type.h-add-__compare_fn_t-and-comparison_fn_.patch
+index f43a22aa8b..d0110a2388 100644
+--- a/meta/recipes-core/systemd/systemd/0003-missing_type.h-add-__compare_fn_t-and-comparison_fn_.patch
++++ b/meta/recipes-core/systemd/systemd/0003-missing_type.h-add-__compare_fn_t-and-comparison_fn_.patch
+@@ -1,7 +1,7 @@
+-From 9f0d5996bbb2db3679a4075fa8301750b786c03b Mon Sep 17 00:00:00 2001
++From 2a2f95b6dc16d2ea7a8e9349c6b19cc50c34777b Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Mon, 25 Feb 2019 13:55:12 +0800
+-Subject: [PATCH 03/26] missing_type.h: add __compare_fn_t and comparison_fn_t
++Subject: [PATCH] missing_type.h: add __compare_fn_t and comparison_fn_t
+ 
+ Make it work with musl where comparison_fn_t and __compare_fn_t
+ is not provided.
+@@ -13,11 +13,12 @@ Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+ [Rebased for v242]
+ Signed-off-by: Andrej Valek <andrej.valek@siemens.com>
++
+ ---
+- src/basic/missing_type.h | 9 +++++++++
+- src/basic/sort-util.h    | 1 +
+- src/core/kmod-setup.c    | 1 +
+- src/journal/catalog.c    | 1 +
++ src/basic/missing_type.h            | 9 +++++++++
++ src/basic/sort-util.h               | 1 +
++ src/core/kmod-setup.c               | 1 +
++ src/libsystemd/sd-journal/catalog.c | 1 +
+  4 files changed, 12 insertions(+)
+ 
+ diff --git a/src/basic/missing_type.h b/src/basic/missing_type.h
+@@ -38,7 +39,7 @@ index f6233090a9..aeaf6ad5ec 100644
+ +typedef int (*__compar_fn_t)(const void *, const void *);
+ +#endif
+ diff --git a/src/basic/sort-util.h b/src/basic/sort-util.h
+-index 3394c9eb72..d9cb2aecb6 100644
++index d92a5ab0ed..a63867c716 100644
+ --- a/src/basic/sort-util.h
+ +++ b/src/basic/sort-util.h
+ @@ -4,6 +4,7 @@
+@@ -61,10 +62,10 @@ index 8a7f82812a..a56f12f47f 100644
+  
+  #if HAVE_KMOD
+  #include "module-util.h"
+-diff --git a/src/journal/catalog.c b/src/journal/catalog.c
+-index 0f6ad8a29e..4e1077ade4 100644
+---- a/src/journal/catalog.c
+-+++ b/src/journal/catalog.c
++diff --git a/src/libsystemd/sd-journal/catalog.c b/src/libsystemd/sd-journal/catalog.c
++index ce8d47ccc3..00845f9776 100644
++--- a/src/libsystemd/sd-journal/catalog.c
+++++ b/src/libsystemd/sd-journal/catalog.c
+ @@ -28,6 +28,7 @@
+  #include "string-util.h"
+  #include "strv.h"
+@@ -73,6 +74,3 @@ index 0f6ad8a29e..4e1077ade4 100644
+  
+  const char * const catalog_file_dirs[] = {
+          "/usr/local/lib/systemd/catalog/",
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0003-sd-dhcp-client-logs-when-dhcp-client-unexpectedly-ga.patch b/meta/recipes-core/systemd/systemd/0003-sd-dhcp-client-logs-when-dhcp-client-unexpectedly-ga.patch
+deleted file mode 100644
+index 07c7da8c21..0000000000
+--- a/meta/recipes-core/systemd/systemd/0003-sd-dhcp-client-logs-when-dhcp-client-unexpectedly-ga.patch
++++ /dev/null
+@@ -1,69 +0,0 @@
+-From 0ad3b0fffe622bffbe9f380c3e4cb99b0961bef5 Mon Sep 17 00:00:00 2001
+-From: Yu Watanabe <watanabe.yu+github@gmail.com>
+-Date: Thu, 24 Jun 2021 01:14:12 +0900
+-Subject: [PATCH] sd-dhcp-client: logs when dhcp client unexpectedly gains a
+- new lease
+-
+-Previously, such situation is handled silently.
+-
+-Upstream-Status: Backport
+-CVE: CVE-2020-13529
+-Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+----
+- src/libsystemd-network/sd-dhcp-client.c | 23 ++++++++++++-----------
+- 1 file changed, 12 insertions(+), 11 deletions(-)
+-
+-diff --git a/src/libsystemd-network/sd-dhcp-client.c b/src/libsystemd-network/sd-dhcp-client.c
+-index ef3a7d2c6b..04a75c6966 100644
+---- a/src/libsystemd-network/sd-dhcp-client.c
+-+++ b/src/libsystemd-network/sd-dhcp-client.c
+-@@ -1760,7 +1760,7 @@ static int client_set_lease_timeouts(sd_dhcp_client *client) {
+- static int client_handle_message(sd_dhcp_client *client, DHCPMessage *message, int len) {
+-         DHCP_CLIENT_DONT_DESTROY(client);
+-         char time_string[FORMAT_TIMESPAN_MAX];
+--        int r, notify_event = 0;
+-+        int r, notify_event;
+- 
+-         assert(client);
+-         assert(client->event);
+-@@ -1815,16 +1815,16 @@ static int client_handle_message(sd_dhcp_client *client, DHCPMessage *message, i
+-                 if (r < 0)
+-                         goto error;
+- 
+-+                if (IN_SET(client->state, DHCP_STATE_REQUESTING, DHCP_STATE_REBOOTING))
+-+                        notify_event = SD_DHCP_CLIENT_EVENT_IP_ACQUIRE;
+-+                else
+-+                        notify_event = r;
+-+
+-                 client->start_delay = 0;
+-                 (void) event_source_disable(client->timeout_resend);
+-                 client->receive_message = sd_event_source_unref(client->receive_message);
+-                 client->fd = safe_close(client->fd);
+- 
+--                if (IN_SET(client->state, DHCP_STATE_REQUESTING, DHCP_STATE_REBOOTING))
+--                        notify_event = SD_DHCP_CLIENT_EVENT_IP_ACQUIRE;
+--                else if (r != SD_DHCP_CLIENT_EVENT_IP_ACQUIRE)
+--                        notify_event = r;
+--
+-                 client->state = DHCP_STATE_BOUND;
+-                 client->attempt = 0;
+- 
+-@@ -1846,12 +1846,13 @@ static int client_handle_message(sd_dhcp_client *client, DHCPMessage *message, i
+- 
+-                 client_initialize_io_events(client, client_receive_message_udp);
+- 
+--                if (notify_event) {
+-+                if (IN_SET(client->state, DHCP_STATE_RENEWING, DHCP_STATE_REBINDING) &&
+-+                    notify_event == SD_DHCP_CLIENT_EVENT_IP_ACQUIRE)
+-+                        /* FIXME: hmm, maybe this is a bug... */
+-+                        log_dhcp_client(client, "client_handle_ack() returned SD_DHCP_CLIENT_EVENT_IP_ACQUIRE while DHCP client is %s the address, skipping callback.",
+-+                                        client->state == DHCP_STATE_RENEWING ? "renewing" : "rebinding");
+-+                else
+-                         client_notify(client, notify_event);
+--                        if (client->state == DHCP_STATE_STOPPED)
+--                                return 0;
+--                }
+--
+-                 break;
+- 
+-         case DHCP_STATE_BOUND:
+diff --git a/meta/recipes-core/systemd/systemd/0004-add-fallback-parse_printf_format-implementation.patch b/meta/recipes-core/systemd/systemd/0004-add-fallback-parse_printf_format-implementation.patch
+index bdd64a0252..1d61367da4 100644
+--- a/meta/recipes-core/systemd/systemd/0004-add-fallback-parse_printf_format-implementation.patch
++++ b/meta/recipes-core/systemd/systemd/0004-add-fallback-parse_printf_format-implementation.patch
+@@ -1,7 +1,7 @@
+-From f3dbe29f7620a063af4d8eb3ea7c48ecd410200d Mon Sep 17 00:00:00 2001
+-From: Chen Qi <Qi.Chen@windriver.com>
+-Date: Mon, 25 Feb 2019 14:04:21 +0800
+-Subject: [PATCH 04/26] add fallback parse_printf_format implementation
++From b19f800e178516d4f4d344457647e4a018bd6855 Mon Sep 17 00:00:00 2001
++From: Alexander Kanavin <alex.kanavin@gmail.com>
++Date: Sat, 22 May 2021 20:26:24 +0200
++Subject: [PATCH] add fallback parse_printf_format implementation
+ 
+ Upstream-Status: Inappropriate [musl specific]
+ 
+@@ -10,22 +10,23 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+ [rebased for systemd 243]
+ Signed-off-by: Scott Murray <scott.murray@konsulko.com>
++
+ ---
+- meson.build                     |   1 +
+- src/basic/meson.build           |   5 +
+- src/basic/parse-printf-format.c | 273 ++++++++++++++++++++++++++++++++
+- src/basic/parse-printf-format.h |  57 +++++++
+- src/basic/stdio-util.h          |   2 +-
+- src/journal/journal-send.c      |   2 +-
++ meson.build                              |   1 +
++ src/basic/meson.build                    |   5 +
++ src/basic/parse-printf-format.c          | 273 +++++++++++++++++++++++
++ src/basic/parse-printf-format.h          |  57 +++++
++ src/basic/stdio-util.h                   |   2 +-
++ src/libsystemd/sd-journal/journal-send.c |   2 +-
+  6 files changed, 338 insertions(+), 2 deletions(-)
+  create mode 100644 src/basic/parse-printf-format.c
+  create mode 100644 src/basic/parse-printf-format.h
+ 
+ diff --git a/meson.build b/meson.build
+-index f406d595e6..6aa47fc755 100644
++index 738879eb21..1aa20b8246 100644
+ --- a/meson.build
+ +++ b/meson.build
+-@@ -646,6 +646,7 @@ endif
++@@ -656,6 +656,7 @@ endif
+  foreach header : ['crypt.h',
+                    'linux/memfd.h',
+                    'linux/vm_sockets.h',
+@@ -34,21 +35,21 @@ index f406d595e6..6aa47fc755 100644
+                    'valgrind/memcheck.h',
+                    'valgrind/valgrind.h',
+ diff --git a/src/basic/meson.build b/src/basic/meson.build
+-index 1183ea83ad..aa5c958850 100644
++index 9b016ce5e8..a9ce21b02e 100644
+ --- a/src/basic/meson.build
+ +++ b/src/basic/meson.build
+-@@ -322,6 +322,11 @@ foreach item : [['af',     af_list_txt,     'af',         ''],
+- endforeach
++@@ -322,6 +322,11 @@ endforeach
+  
+  basic_sources += generated_gperf_headers
+-+
++ 
+ +if conf.get('HAVE_PRINTF_H') != 1
+ +        basic_sources += [files('parse-printf-format.c')]
+ +endif
+ +
+- basic_gcrypt_sources = files(
+-         'gcrypt-util.c',
+-         'gcrypt-util.h')
+++
++ ############################################################
++ 
++ arch_list = [
+ diff --git a/src/basic/parse-printf-format.c b/src/basic/parse-printf-format.c
+ new file mode 100644
+ index 0000000000..49437e5445
+@@ -410,10 +411,10 @@ index 6dc1e72312..cea76b36cf 100644
+  
+  #define snprintf_ok(buf, len, fmt, ...) \
+          ((size_t) snprintf(buf, len, fmt, __VA_ARGS__) < (len))
+-diff --git a/src/journal/journal-send.c b/src/journal/journal-send.c
++diff --git a/src/libsystemd/sd-journal/journal-send.c b/src/libsystemd/sd-journal/journal-send.c
+ index fd3fd7ef9c..e8e6ad555b 100644
+---- a/src/journal/journal-send.c
+-+++ b/src/journal/journal-send.c
++--- a/src/libsystemd/sd-journal/journal-send.c
+++++ b/src/libsystemd/sd-journal/journal-send.c
+ @@ -2,7 +2,6 @@
+  
+  #include <errno.h>
+@@ -430,6 +431,3 @@ index fd3fd7ef9c..e8e6ad555b 100644
+  
+  #define SNDBUF_SIZE (8*1024*1024)
+  
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0004-sd-dhcp-client-tentatively-ignore-FORCERENEW-command.patch b/meta/recipes-core/systemd/systemd/0004-sd-dhcp-client-tentatively-ignore-FORCERENEW-command.patch
+deleted file mode 100644
+index c65fb45ab9..0000000000
+--- a/meta/recipes-core/systemd/systemd/0004-sd-dhcp-client-tentatively-ignore-FORCERENEW-command.patch
++++ /dev/null
+@@ -1,42 +0,0 @@
+-From ae18277a6cfd04af8a914780f04a867254ab2341 Mon Sep 17 00:00:00 2001
+-From: Yu Watanabe <watanabe.yu+github@gmail.com>
+-Date: Thu, 24 Jun 2021 01:22:07 +0900
+-Subject: [PATCH] sd-dhcp-client: tentatively ignore FORCERENEW command
+-
+-This makes DHCP client ignore FORCERENEW requests, as unauthenticated
+-FORCERENEW requests causes a security issue (TALOS-2020-1142, CVE-2020-13529).
+-
+-Let's re-enable this after RFC3118 (Authentication for DHCP Messages)
+-and/or RFC6704 (Forcerenew Nonce Authentication) are implemented.
+-
+-Fixes #16774.
+-
+-Upstream-Status: Backport
+-CVE: CVE-2020-13529
+-Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+----
+- src/libsystemd-network/sd-dhcp-client.c | 8 ++++++++
+- 1 file changed, 8 insertions(+)
+-
+-diff --git a/src/libsystemd-network/sd-dhcp-client.c b/src/libsystemd-network/sd-dhcp-client.c
+-index 04a75c6966..54eb3a2ab0 100644
+---- a/src/libsystemd-network/sd-dhcp-client.c
+-+++ b/src/libsystemd-network/sd-dhcp-client.c
+-@@ -1536,9 +1536,17 @@ static int client_handle_forcerenew(sd_dhcp_client *client, DHCPMessage *force,
+-         if (r != DHCP_FORCERENEW)
+-                 return -ENOMSG;
+- 
+-+#if 0
+-         log_dhcp_client(client, "FORCERENEW");
+- 
+-         return 0;
+-+#else
+-+        /* FIXME: Ignore FORCERENEW requests until we implement RFC3118 (Authentication for DHCP
+-+         * Messages) and/or RFC6704 (Forcerenew Nonce Authentication), as unauthenticated FORCERENEW
+-+         * requests causes a security issue (TALOS-2020-1142, CVE-2020-13529). */
+-+        log_dhcp_client(client, "Received FORCERENEW, ignoring.");
+-+        return -ENOMSG;
+-+#endif
+- }
+- 
+- static bool lease_equal(const sd_dhcp_lease *a, const sd_dhcp_lease *b) {
+diff --git a/meta/recipes-core/systemd/systemd/0005-src-basic-missing.h-check-for-missing-strndupa.patch b/meta/recipes-core/systemd/systemd/0005-src-basic-missing.h-check-for-missing-strndupa.patch
+index d63e3c0d09..0462d52d5e 100644
+--- a/meta/recipes-core/systemd/systemd/0005-src-basic-missing.h-check-for-missing-strndupa.patch
++++ b/meta/recipes-core/systemd/systemd/0005-src-basic-missing.h-check-for-missing-strndupa.patch
+@@ -1,7 +1,7 @@
+-From 5aeae0ea89f5af74ed5d95bed1d87a03b3801ff0 Mon Sep 17 00:00:00 2001
++From db6551741a3654d8e75aff93ea00fbff579f7b02 Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Mon, 25 Feb 2019 14:18:21 +0800
+-Subject: [PATCH 05/26] src/basic/missing.h: check for missing strndupa
++Subject: [PATCH] src/basic/missing.h: check for missing strndupa
+ 
+ include missing.h  for definition of strndupa
+ 
+@@ -17,6 +17,7 @@ Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+ [rebased for systemd 244]
+ [Rebased for v247]
+ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
++
+ ---
+  meson.build                                |  1 +
+  src/backlight/backlight.c                  |  1 +
+@@ -25,11 +26,12 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  src/basic/log.c                            |  1 +
+  src/basic/missing_stdlib.h                 | 12 ++++++++++++
+  src/basic/mkdir.c                          |  1 +
++ src/basic/mountpoint-util.c                |  1 +
+  src/basic/parse-util.c                     |  1 +
+  src/basic/path-lookup.c                    |  1 +
++ src/basic/percent-util.c                   |  1 +
+  src/basic/proc-cmdline.c                   |  1 +
+  src/basic/procfs-util.c                    |  1 +
+- src/basic/selinux-util.c                   |  1 +
+  src/basic/time-util.c                      |  1 +
+  src/boot/bless-boot.c                      |  1 +
+  src/core/dbus-cgroup.c                     |  1 +
+@@ -41,12 +43,12 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  src/coredump/coredump-vacuum.c             |  1 +
+  src/journal-remote/journal-remote-main.c   |  1 +
+  src/journal/journalctl.c                   |  1 +
+- src/journal/sd-journal.c                   |  1 +
+  src/libsystemd/sd-bus/bus-message.c        |  1 +
+  src/libsystemd/sd-bus/bus-objects.c        |  1 +
+  src/libsystemd/sd-bus/bus-socket.c         |  1 +
+  src/libsystemd/sd-bus/sd-bus.c             |  1 +
+  src/libsystemd/sd-bus/test-bus-benchmark.c |  1 +
++ src/libsystemd/sd-journal/sd-journal.c     |  1 +
+  src/locale/keymap-util.c                   |  1 +
+  src/login/pam_systemd.c                    |  1 +
+  src/network/generator/network-generator.c  |  1 +
+@@ -68,18 +70,22 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  src/udev/udev-builtin-path_id.c            |  1 +
+  src/udev/udev-event.c                      |  1 +
+  src/udev/udev-rules.c                      |  1 +
+- 50 files changed, 61 insertions(+)
++ 51 files changed, 62 insertions(+)
+ 
++diff --git a/meson.build b/meson.build
++index 1aa20b8246..aafee71eb4 100644
+ --- a/meson.build
+ +++ b/meson.build
+-@@ -535,6 +535,7 @@ foreach ident : [
+-                                  #include <sys/wait.h>'''],
+-         ['mallinfo',          '''#include <malloc.h>'''],
+-         ['close_range',       '''#include <unistd.h>'''],
+-+        ['strndupa' ,         '''#include <string.h>'''],
+- ]
++@@ -480,6 +480,7 @@ foreach ident : ['secure_getenv', '__secure_getenv']
++ endforeach
+  
+-         have = cc.has_function(ident[0], prefix : ident[1], args : '-D_GNU_SOURCE')
++ foreach ident : [
+++        ['strndupa' ,         '''#include <string.h>'''],
++         ['memfd_create',      '''#include <sys/mman.h>'''],
++         ['gettid',            '''#include <sys/types.h>
++                                  #include <unistd.h>'''],
++diff --git a/src/backlight/backlight.c b/src/backlight/backlight.c
++index 7c0970a60c..c129ff0f4f 100644
+ --- a/src/backlight/backlight.c
+ +++ b/src/backlight/backlight.c
+ @@ -19,6 +19,7 @@
+@@ -90,6 +96,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static int help(void) {
+          _cleanup_free_ char *link = NULL;
++diff --git a/src/basic/cgroup-util.c b/src/basic/cgroup-util.c
++index 1ff6160dc8..c9efd862a2 100644
+ --- a/src/basic/cgroup-util.c
+ +++ b/src/basic/cgroup-util.c
+ @@ -38,6 +38,7 @@
+@@ -100,9 +108,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static int cg_enumerate_items(const char *controller, const char *path, FILE **_f, const char *item) {
+          _cleanup_free_ char *fs = NULL;
++diff --git a/src/basic/env-util.c b/src/basic/env-util.c
++index 81b1e3f10e..8fedcfd1cd 100644
+ --- a/src/basic/env-util.c
+ +++ b/src/basic/env-util.c
+-@@ -15,6 +15,7 @@
++@@ -18,6 +18,7 @@
+  #include "string-util.h"
+  #include "strv.h"
+  #include "utf8.h"
+@@ -110,6 +120,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  /* We follow bash for the character set. Different shells have different rules. */
+  #define VALID_BASH_ENV_NAME_CHARS               \
++diff --git a/src/basic/log.c b/src/basic/log.c
++index fb183ea9e7..82e7bdff60 100644
+ --- a/src/basic/log.c
+ +++ b/src/basic/log.c
+ @@ -36,6 +36,7 @@
+@@ -120,6 +132,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  #define SNDBUF_SIZE (8*1024*1024)
+  
++diff --git a/src/basic/missing_stdlib.h b/src/basic/missing_stdlib.h
++index 8c76f93eb2..9068bfb4f0 100644
+ --- a/src/basic/missing_stdlib.h
+ +++ b/src/basic/missing_stdlib.h
+ @@ -11,3 +11,15 @@
+@@ -138,6 +152,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+ +    (char *)memcpy(__new, __old, __len); \
+ +  })
+ +#endif
++diff --git a/src/basic/mkdir.c b/src/basic/mkdir.c
++index f91f8f7a08..fb31596216 100644
+ --- a/src/basic/mkdir.c
+ +++ b/src/basic/mkdir.c
+ @@ -14,6 +14,7 @@
+@@ -148,9 +164,23 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  int mkdir_safe_internal(
+                  const char *path,
++diff --git a/src/basic/mountpoint-util.c b/src/basic/mountpoint-util.c
++index 8c836a1b74..2eb7e5a634 100644
++--- a/src/basic/mountpoint-util.c
+++++ b/src/basic/mountpoint-util.c
++@@ -11,6 +11,7 @@
++ #include "missing_stat.h"
++ #include "missing_syscall.h"
++ #include "mkdir.h"
+++#include "missing_stdlib.h"
++ #include "mountpoint-util.h"
++ #include "parse-util.h"
++ #include "path-util.h"
++diff --git a/src/basic/parse-util.c b/src/basic/parse-util.c
++index b79c885dfd..6dabda5691 100644
+ --- a/src/basic/parse-util.c
+ +++ b/src/basic/parse-util.c
+-@@ -22,6 +22,7 @@
++@@ -19,6 +19,7 @@
+  #include "stat-util.h"
+  #include "string-util.h"
+  #include "strv.h"
+@@ -158,6 +188,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  int parse_boolean(const char *v) {
+          if (!v)
++diff --git a/src/basic/path-lookup.c b/src/basic/path-lookup.c
++index 05eb17d66c..b6026aab28 100644
+ --- a/src/basic/path-lookup.c
+ +++ b/src/basic/path-lookup.c
+ @@ -15,6 +15,7 @@
+@@ -168,6 +200,20 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  int xdg_user_runtime_dir(char **ret, const char *suffix) {
+          const char *e;
++diff --git a/src/basic/percent-util.c b/src/basic/percent-util.c
++index 06f20fd61e..8159d721bb 100644
++--- a/src/basic/percent-util.c
+++++ b/src/basic/percent-util.c
++@@ -3,6 +3,7 @@
++ #include "percent-util.h"
++ #include "string-util.h"
++ #include "parse-util.h"
+++#include "missing_stdlib.h"
++ 
++ static int parse_parts_value_whole(const char *p, const char *symbol) {
++         const char *pc, *n;
++diff --git a/src/basic/proc-cmdline.c b/src/basic/proc-cmdline.c
++index 410b8a3eb5..f2c4355609 100644
+ --- a/src/basic/proc-cmdline.c
+ +++ b/src/basic/proc-cmdline.c
+ @@ -15,6 +15,7 @@
+@@ -178,6 +224,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  int proc_cmdline(char **ret) {
+          const char *e;
++diff --git a/src/basic/procfs-util.c b/src/basic/procfs-util.c
++index 9234ccaf85..8c57094225 100644
+ --- a/src/basic/procfs-util.c
+ +++ b/src/basic/procfs-util.c
+ @@ -11,6 +11,7 @@
+@@ -188,19 +236,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  int procfs_tasks_get_limit(uint64_t *ret) {
+          _cleanup_free_ char *value = NULL;
+---- a/src/basic/selinux-util.c
+-+++ b/src/basic/selinux-util.c
+-@@ -27,6 +27,7 @@
+- #include "selinux-util.h"
+- #include "stdio-util.h"
+- #include "time-util.h"
+-+#include "missing_stdlib.h"
+- 
+- #if HAVE_SELINUX
+- DEFINE_TRIVIAL_CLEANUP_FUNC(context_t, context_free);
++diff --git a/src/basic/time-util.c b/src/basic/time-util.c
++index 5d162e8ffe..1cde8e4262 100644
+ --- a/src/basic/time-util.c
+ +++ b/src/basic/time-util.c
+-@@ -27,6 +27,7 @@
++@@ -26,6 +26,7 @@
+  #include "string-util.h"
+  #include "strv.h"
+  #include "time-util.h"
+@@ -208,6 +248,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static clockid_t map_clock_id(clockid_t c) {
+  
++diff --git a/src/boot/bless-boot.c b/src/boot/bless-boot.c
++index 3fc319ca27..90064c90f3 100644
+ --- a/src/boot/bless-boot.c
+ +++ b/src/boot/bless-boot.c
+ @@ -18,6 +18,7 @@
+@@ -218,19 +260,23 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static char **arg_path = NULL;
+  
++diff --git a/src/core/dbus-cgroup.c b/src/core/dbus-cgroup.c
++index 84c3caf3a5..0fa84eaa38 100644
+ --- a/src/core/dbus-cgroup.c
+ +++ b/src/core/dbus-cgroup.c
+-@@ -16,6 +16,7 @@
+- #include "fileio.h"
+- #include "limits-util.h"
++@@ -20,6 +20,7 @@
++ #include "parse-util.h"
+  #include "path-util.h"
++ #include "percent-util.h"
+ +#include "missing_stdlib.h"
+  
+  BUS_DEFINE_PROPERTY_GET(bus_property_get_tasks_max, "t", TasksMax, tasks_max_resolve);
+  
++diff --git a/src/core/dbus-execute.c b/src/core/dbus-execute.c
++index 50daef6702..1cc6d91e64 100644
+ --- a/src/core/dbus-execute.c
+ +++ b/src/core/dbus-execute.c
+-@@ -41,6 +41,7 @@
++@@ -42,6 +42,7 @@
+  #include "unit-printf.h"
+  #include "user-util.h"
+  #include "utf8.h"
+@@ -238,9 +284,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  BUS_DEFINE_PROPERTY_GET_ENUM(bus_property_get_exec_output, exec_output, ExecOutput);
+  static BUS_DEFINE_PROPERTY_GET_ENUM(property_get_exec_input, exec_input, ExecInput);
++diff --git a/src/core/dbus-util.c b/src/core/dbus-util.c
++index ca9b399d8c..b864480a8c 100644
+ --- a/src/core/dbus-util.c
+ +++ b/src/core/dbus-util.c
+-@@ -7,6 +7,7 @@
++@@ -9,6 +9,7 @@
+  #include "unit-printf.h"
+  #include "user-util.h"
+  #include "unit.h"
+@@ -248,16 +296,20 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  int bus_property_get_triggered_unit(
+                  sd_bus *bus,
++diff --git a/src/core/execute.c b/src/core/execute.c
++index 2a337b55a2..2a64675c5f 100644
+ --- a/src/core/execute.c
+ +++ b/src/core/execute.c
+-@@ -96,6 +96,7 @@
+- #include "unit.h"
++@@ -98,6 +98,7 @@
++ #include "unit-serialize.h"
+  #include "user-util.h"
+  #include "utmp-wtmp.h"
+ +#include "missing_stdlib.h"
+  
+  #define IDLE_TIMEOUT_USEC (5*USEC_PER_SEC)
+  #define IDLE_TIMEOUT2_USEC (1*USEC_PER_SEC)
++diff --git a/src/core/kmod-setup.c b/src/core/kmod-setup.c
++index a56f12f47f..6b8729ef67 100644
+ --- a/src/core/kmod-setup.c
+ +++ b/src/core/kmod-setup.c
+ @@ -11,6 +11,7 @@
+@@ -268,6 +320,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  #if HAVE_KMOD
+  #include "module-util.h"
++diff --git a/src/core/service.c b/src/core/service.c
++index cb0a528f0d..740d305710 100644
+ --- a/src/core/service.c
+ +++ b/src/core/service.c
+ @@ -41,6 +41,7 @@
+@@ -278,6 +332,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static const UnitActiveState state_translation_table[_SERVICE_STATE_MAX] = {
+          [SERVICE_DEAD] = UNIT_INACTIVE,
++diff --git a/src/coredump/coredump-vacuum.c b/src/coredump/coredump-vacuum.c
++index 95c3fca661..d4a9f27b08 100644
+ --- a/src/coredump/coredump-vacuum.c
+ +++ b/src/coredump/coredump-vacuum.c
+ @@ -16,6 +16,7 @@
+@@ -288,9 +344,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  #define DEFAULT_MAX_USE_LOWER (uint64_t) (1ULL*1024ULL*1024ULL)           /* 1 MiB */
+  #define DEFAULT_MAX_USE_UPPER (uint64_t) (4ULL*1024ULL*1024ULL*1024ULL)   /* 4 GiB */
++diff --git a/src/journal-remote/journal-remote-main.c b/src/journal-remote/journal-remote-main.c
++index ae1d43756a..24de98c9f3 100644
+ --- a/src/journal-remote/journal-remote-main.c
+ +++ b/src/journal-remote/journal-remote-main.c
+-@@ -22,6 +22,7 @@
++@@ -24,6 +24,7 @@
+  #include "stat-util.h"
+  #include "string-table.h"
+  #include "strv.h"
+@@ -298,9 +356,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  #define PRIV_KEY_FILE CERTIFICATE_ROOT "/private/journal-remote.pem"
+  #define CERT_FILE     CERTIFICATE_ROOT "/certs/journal-remote.pem"
++diff --git a/src/journal/journalctl.c b/src/journal/journalctl.c
++index c8fb726d42..858a425d12 100644
+ --- a/src/journal/journalctl.c
+ +++ b/src/journal/journalctl.c
+-@@ -73,6 +73,7 @@
++@@ -72,6 +72,7 @@
+  #include "unit-name.h"
+  #include "user-util.h"
+  #include "varlink.h"
+@@ -308,19 +368,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  #define DEFAULT_FSS_INTERVAL_USEC (15*USEC_PER_MINUTE)
+  #define PROCESS_INOTIFY_INTERVAL 1024   /* Every 1,024 messages processed */
+---- a/src/journal/sd-journal.c
+-+++ b/src/journal/sd-journal.c
+-@@ -40,6 +40,7 @@
+- #include "string-util.h"
+- #include "strv.h"
+- #include "syslog-util.h"
+-+#include "missing_stdlib.h"
+- 
+- #define JOURNAL_FILES_MAX 7168
+- 
++diff --git a/src/libsystemd/sd-bus/bus-message.c b/src/libsystemd/sd-bus/bus-message.c
++index 20f7396c74..3471311ef5 100644
+ --- a/src/libsystemd/sd-bus/bus-message.c
+ +++ b/src/libsystemd/sd-bus/bus-message.c
+-@@ -21,6 +21,7 @@
++@@ -20,6 +20,7 @@
+  #include "strv.h"
+  #include "time-util.h"
+  #include "utf8.h"
+@@ -328,9 +380,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static int message_append_basic(sd_bus_message *m, char type, const void *p, const void **stored);
+  
++diff --git a/src/libsystemd/sd-bus/bus-objects.c b/src/libsystemd/sd-bus/bus-objects.c
++index bfd42aea7d..daefc56e3e 100644
+ --- a/src/libsystemd/sd-bus/bus-objects.c
+ +++ b/src/libsystemd/sd-bus/bus-objects.c
+-@@ -13,6 +13,7 @@
++@@ -12,6 +12,7 @@
+  #include "set.h"
+  #include "string-util.h"
+  #include "strv.h"
+@@ -338,9 +392,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static int node_vtable_get_userdata(
+                  sd_bus *bus,
++diff --git a/src/libsystemd/sd-bus/bus-socket.c b/src/libsystemd/sd-bus/bus-socket.c
++index 378774fe8b..2694c177d5 100644
+ --- a/src/libsystemd/sd-bus/bus-socket.c
+ +++ b/src/libsystemd/sd-bus/bus-socket.c
+-@@ -28,6 +28,7 @@
++@@ -27,6 +27,7 @@
+  #include "string-util.h"
+  #include "user-util.h"
+  #include "utf8.h"
+@@ -348,29 +404,47 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  #define SNDBUF_SIZE (8*1024*1024)
+  
++diff --git a/src/libsystemd/sd-bus/sd-bus.c b/src/libsystemd/sd-bus/sd-bus.c
++index a32e2f5e20..97fd3aec82 100644
+ --- a/src/libsystemd/sd-bus/sd-bus.c
+ +++ b/src/libsystemd/sd-bus/sd-bus.c
+-@@ -41,6 +41,7 @@
+- #include "process-util.h"
++@@ -42,6 +42,7 @@
+  #include "string-util.h"
+  #include "strv.h"
++ #include "user-util.h"
+ +#include "missing_stdlib.h"
+  
+  #define log_debug_bus_message(m)                                         \
+          do {                                                             \
++diff --git a/src/libsystemd/sd-bus/test-bus-benchmark.c b/src/libsystemd/sd-bus/test-bus-benchmark.c
++index 13c08fe295..9aae83486e 100644
+ --- a/src/libsystemd/sd-bus/test-bus-benchmark.c
+ +++ b/src/libsystemd/sd-bus/test-bus-benchmark.c
+ @@ -14,6 +14,7 @@
+- #include "missing_resource.h"
++ #include "string-util.h"
+  #include "time-util.h"
+  #include "util.h"
+ +#include "missing_stdlib.h"
+  
+  #define MAX_SIZE (2*1024*1024)
+  
++diff --git a/src/libsystemd/sd-journal/sd-journal.c b/src/libsystemd/sd-journal/sd-journal.c
++index 5728c537bc..94885b0bf6 100644
++--- a/src/libsystemd/sd-journal/sd-journal.c
+++++ b/src/libsystemd/sd-journal/sd-journal.c
++@@ -40,6 +40,7 @@
++ #include "string-util.h"
++ #include "strv.h"
++ #include "syslog-util.h"
+++#include "missing_stdlib.h"
++ 
++ #define JOURNAL_FILES_MAX 7168
++ 
++diff --git a/src/locale/keymap-util.c b/src/locale/keymap-util.c
++index d2f0566dbc..3b7746557e 100644
+ --- a/src/locale/keymap-util.c
+ +++ b/src/locale/keymap-util.c
+-@@ -21,6 +21,7 @@
++@@ -24,6 +24,7 @@
+  #include "string-util.h"
+  #include "strv.h"
+  #include "tmpfile-util.h"
+@@ -378,6 +452,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static bool startswith_comma(const char *s, const char *prefix) {
+          s = startswith(s, prefix);
++diff --git a/src/login/pam_systemd.c b/src/login/pam_systemd.c
++index f8bd17eefe..9633fbc152 100644
+ --- a/src/login/pam_systemd.c
+ +++ b/src/login/pam_systemd.c
+ @@ -31,6 +31,7 @@
+@@ -388,6 +464,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  #include "pam-util.h"
+  #include "parse-util.h"
+  #include "path-util.h"
++diff --git a/src/network/generator/network-generator.c b/src/network/generator/network-generator.c
++index 60e074e99b..a728e3b7a1 100644
+ --- a/src/network/generator/network-generator.c
+ +++ b/src/network/generator/network-generator.c
+ @@ -13,6 +13,7 @@
+@@ -398,9 +476,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  /*
+    # .network
++diff --git a/src/nspawn/nspawn-settings.c b/src/nspawn/nspawn-settings.c
++index 3847fe4ec4..3696b57baa 100644
+ --- a/src/nspawn/nspawn-settings.c
+ +++ b/src/nspawn/nspawn-settings.c
+-@@ -16,6 +16,7 @@
++@@ -17,6 +17,7 @@
+  #include "strv.h"
+  #include "user-util.h"
+  #include "util.h"
+@@ -408,19 +488,23 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  Settings *settings_new(void) {
+          Settings *s;
++diff --git a/src/nss-mymachines/nss-mymachines.c b/src/nss-mymachines/nss-mymachines.c
++index 44715bb3e5..bc1e688b5e 100644
+ --- a/src/nss-mymachines/nss-mymachines.c
+ +++ b/src/nss-mymachines/nss-mymachines.c
+-@@ -19,6 +19,7 @@
++@@ -21,6 +21,7 @@
+  #include "nss-util.h"
+  #include "signal-util.h"
+  #include "string-util.h"
+ +#include "missing_stdlib.h"
+  
+- NSS_GETHOSTBYNAME_PROTOTYPES(mymachines);
+- NSS_GETPW_PROTOTYPES(mymachines);
++ static void setup_logging(void) {
++         /* We need a dummy function because log_parse_environment is a macro. */
++diff --git a/src/portable/portable.c b/src/portable/portable.c
++index 4cf5fb4f0a..577dc5c8d7 100644
+ --- a/src/portable/portable.c
+ +++ b/src/portable/portable.c
+-@@ -31,6 +31,7 @@
++@@ -34,6 +34,7 @@
+  #include "strv.h"
+  #include "tmpfile-util.h"
+  #include "user-util.h"
+@@ -428,9 +512,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static const char profile_dirs[] = CONF_PATHS_NULSTR("systemd/portable/profile");
+  
++diff --git a/src/resolve/resolvectl.c b/src/resolve/resolvectl.c
++index 7d13ed3905..ddc37115b8 100644
+ --- a/src/resolve/resolvectl.c
+ +++ b/src/resolve/resolvectl.c
+-@@ -37,6 +37,7 @@
++@@ -41,6 +41,7 @@
+  #include "terminal-util.h"
+  #include "utf8.h"
+  #include "verbs.h"
+@@ -438,6 +524,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static int arg_family = AF_UNSPEC;
+  static int arg_ifindex = 0;
++diff --git a/src/shared/bus-get-properties.c b/src/shared/bus-get-properties.c
++index feb6d3807f..eb11d29e50 100644
+ --- a/src/shared/bus-get-properties.c
+ +++ b/src/shared/bus-get-properties.c
+ @@ -4,6 +4,7 @@
+@@ -448,6 +536,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  int bus_property_get_bool(
+                  sd_bus *bus,
++diff --git a/src/shared/bus-unit-procs.c b/src/shared/bus-unit-procs.c
++index 6f4a71138c..4a46de2c1b 100644
+ --- a/src/shared/bus-unit-procs.c
+ +++ b/src/shared/bus-unit-procs.c
+ @@ -10,6 +10,7 @@
+@@ -458,9 +548,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  struct CGroupInfo {
+          char *cgroup_path;
++diff --git a/src/shared/bus-unit-util.c b/src/shared/bus-unit-util.c
++index d3a5b25d18..003594e2d7 100644
+ --- a/src/shared/bus-unit-util.c
+ +++ b/src/shared/bus-unit-util.c
+-@@ -44,6 +44,7 @@
++@@ -47,6 +47,7 @@
+  #include "unit-def.h"
+  #include "user-util.h"
+  #include "utf8.h"
+@@ -468,6 +560,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  int bus_parse_unit_info(sd_bus_message *message, UnitInfo *u) {
+          assert(message);
++diff --git a/src/shared/bus-util.c b/src/shared/bus-util.c
++index 64ca67993c..31e3d148ea 100644
+ --- a/src/shared/bus-util.c
+ +++ b/src/shared/bus-util.c
+ @@ -21,6 +21,7 @@
+@@ -478,6 +572,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static int name_owner_change_callback(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
+          sd_event *e = userdata;
++diff --git a/src/shared/dns-domain.c b/src/shared/dns-domain.c
++index 787bb8fec9..009589a16f 100644
+ --- a/src/shared/dns-domain.c
+ +++ b/src/shared/dns-domain.c
+ @@ -17,6 +17,7 @@
+@@ -488,9 +584,11 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  int dns_label_unescape(const char **name, char *dest, size_t sz, DNSLabelFlags flags) {
+          const char *n;
++diff --git a/src/shared/journal-importer.c b/src/shared/journal-importer.c
++index 9e11dc09c1..f9954c1520 100644
+ --- a/src/shared/journal-importer.c
+ +++ b/src/shared/journal-importer.c
+-@@ -14,6 +14,7 @@
++@@ -15,6 +15,7 @@
+  #include "parse-util.h"
+  #include "string-util.h"
+  #include "unaligned.h"
+@@ -498,6 +596,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  enum {
+          IMPORTER_STATE_LINE = 0,    /* waiting to read, or reading line */
++diff --git a/src/shared/logs-show.c b/src/shared/logs-show.c
++index e63c59bd94..dd9773c009 100644
+ --- a/src/shared/logs-show.c
+ +++ b/src/shared/logs-show.c
+ @@ -41,6 +41,7 @@
+@@ -508,6 +608,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  /* up to three lines (each up to 100 characters) or 300 characters, whichever is less */
+  #define PRINT_LINE_THRESHOLD 3
++diff --git a/src/shared/pager.c b/src/shared/pager.c
++index 4bbad7e37b..eefcdd068c 100644
+ --- a/src/shared/pager.c
+ +++ b/src/shared/pager.c
+ @@ -26,6 +26,7 @@
+@@ -518,6 +620,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static pid_t pager_pid = 0;
+  
++diff --git a/src/shared/uid-range.c b/src/shared/uid-range.c
++index 5d5bf7f21d..f1002ffa6c 100644
+ --- a/src/shared/uid-range.c
+ +++ b/src/shared/uid-range.c
+ @@ -9,6 +9,7 @@
+@@ -528,6 +632,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static bool uid_range_intersect(UidRange *range, uid_t start, uid_t nr) {
+          assert(range);
++diff --git a/src/socket-proxy/socket-proxyd.c b/src/socket-proxy/socket-proxyd.c
++index 6e3ee0d76b..7727e33d95 100644
+ --- a/src/socket-proxy/socket-proxyd.c
+ +++ b/src/socket-proxy/socket-proxyd.c
+ @@ -26,6 +26,7 @@
+@@ -538,6 +644,8 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  #define BUFFER_SIZE (256 * 1024)
+  
++diff --git a/src/test/test-hexdecoct.c b/src/test/test-hexdecoct.c
++index c9d318b8d1..fcb8d40805 100644
+ --- a/src/test/test-hexdecoct.c
+ +++ b/src/test/test-hexdecoct.c
+ @@ -6,6 +6,7 @@
+@@ -548,16 +656,20 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  static void test_hexchar(void) {
+          assert_se(hexchar(0xa) == 'a');
++diff --git a/src/udev/udev-builtin-path_id.c b/src/udev/udev-builtin-path_id.c
++index 65c40de4c8..4ef9a0c6c8 100644
+ --- a/src/udev/udev-builtin-path_id.c
+ +++ b/src/udev/udev-builtin-path_id.c
+ @@ -22,6 +22,7 @@
+- #include "strv.h"
+  #include "sysexits.h"
+  #include "udev-builtin.h"
++ #include "udev-util.h"
+ +#include "missing_stdlib.h"
+  
+  _printf_(2,3)
+  static void path_prepend(char **path, const char *fmt, ...) {
++diff --git a/src/udev/udev-event.c b/src/udev/udev-event.c
++index b28089be71..a7e2232299 100644
+ --- a/src/udev/udev-event.c
+ +++ b/src/udev/udev-event.c
+ @@ -34,6 +34,7 @@
+@@ -568,23 +680,15 @@ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
+  
+  typedef struct Spawn {
+          sd_device *device;
++diff --git a/src/udev/udev-rules.c b/src/udev/udev-rules.c
++index bf997fc0ed..e3f5f1f2e2 100644
+ --- a/src/udev/udev-rules.c
+ +++ b/src/udev/udev-rules.c
+-@@ -30,6 +30,7 @@
+- #include "udev-rules.h"
++@@ -33,6 +33,7 @@
++ #include "udev-util.h"
+  #include "user-util.h"
+  #include "virt.h"
+ +#include "missing_stdlib.h"
+  
+  #define RULES_DIRS (const char* const*) CONF_PATHS_STRV("udev/rules.d")
+  
+---- a/src/basic/mountpoint-util.c
+-+++ b/src/basic/mountpoint-util.c
+-@@ -10,6 +10,7 @@
+- #include "fs-util.h"
+- #include "missing_stat.h"
+- #include "missing_syscall.h"
+-+#include "missing_stdlib.h"
+- #include "mountpoint-util.h"
+- #include "parse-util.h"
+- #include "path-util.h"
+diff --git a/meta/recipes-core/systemd/systemd/0006-Include-netinet-if_ether.h.patch b/meta/recipes-core/systemd/systemd/0006-Include-netinet-if_ether.h.patch
+index a978558b42..855607e6a8 100644
+--- a/meta/recipes-core/systemd/systemd/0006-Include-netinet-if_ether.h.patch
++++ b/meta/recipes-core/systemd/systemd/0006-Include-netinet-if_ether.h.patch
+@@ -1,7 +1,7 @@
+-From d3ed0da271738fd0fc3d3e4d82d6f5810334b05e Mon Sep 17 00:00:00 2001
++From d7ae3aadc70555932e03349907f8be04d03a50ee Mon Sep 17 00:00:00 2001
+ From: Khem Raj <raj.khem@gmail.com>
+ Date: Thu, 26 Oct 2017 22:10:42 -0700
+-Subject: [PATCH 06/26] Include netinet/if_ether.h
++Subject: [PATCH] Include netinet/if_ether.h
+ 
+ Fixes
+ /path/to/systemd/recipe-sysroot/usr/include/netinet/if_ether.h:101:8: error: redefinition of 'struct ethhdr'
+@@ -31,32 +31,79 @@ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+ Signed-off-by: Scott Murray <scott.murray@konsulko.com>
+ [rebased for systemd 247]
+ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
++
+ ---
+- src/libsystemd-network/sd-dhcp6-client.c  | 1 -
+- src/libsystemd/sd-netlink/netlink-types.c | 1 +
+- src/machine/machine-dbus.c                | 1 +
+- src/network/netdev/bond.c                 | 1 +
+- src/network/netdev/bridge.c               | 1 +
+- src/network/netdev/macsec.c               | 1 +
+- src/network/netdev/netdev-gperf.gperf     | 1 +
+- src/network/netdev/netdev.c               | 1 +
+- src/network/networkd-brvlan.c             | 1 +
+- src/network/networkd-dhcp-common.c        | 4 +++-
+- src/network/networkd-dhcp-server.c        | 4 ++--
+- src/network/networkd-dhcp4.c              | 2 +-
+- src/network/networkd-dhcp6.c              | 2 +-
+- src/network/networkd-link.c               | 2 +-
+- src/network/networkd-network.c            | 1 +
+- src/network/networkd-route.c              | 5 ++++-
+- src/network/test-network-tables.c         | 1 +
+- src/shared/ethtool-util.c                 | 1 +
+- src/shared/ethtool-util.h                 | 1 +
+- src/udev/net/link-config.c                | 1 +
+- src/udev/udev-builtin-net_setup_link.c    | 1 +
+- 21 files changed, 26 insertions(+), 8 deletions(-)
++ src/basic/linux/in6.h                     | 14 +++++++-------
++ src/libsystemd-network/sd-dhcp6-client.c  |  1 -
++ src/libsystemd/sd-netlink/netlink-types.c |  1 +
++ src/machine/machine-dbus.c                |  1 +
++ src/network/netdev/bond.c                 |  1 +
++ src/network/netdev/bridge.c               |  1 +
++ src/network/netdev/macsec.c               |  1 +
++ src/network/netdev/netdev-gperf.gperf     |  1 +
++ src/network/netdev/netdev.c               |  1 +
++ src/network/networkd-bridge-vlan.c        |  1 +
++ src/network/networkd-dhcp-common.c        |  4 +++-
++ src/network/networkd-dhcp-server.c        |  4 ++--
++ src/network/networkd-dhcp4.c              |  2 +-
++ src/network/networkd-dhcp6.c              |  2 +-
++ src/network/networkd-link.c               |  2 +-
++ src/network/networkd-network.c            |  1 +
++ src/network/networkd-route.c              |  1 +
++ src/network/networkd-setlink.c            |  2 +-
++ src/network/test-network-tables.c         |  1 +
++ src/shared/ethtool-util.c                 |  1 +
++ src/shared/ethtool-util.h                 |  1 +
++ src/udev/net/link-config.c                |  1 +
++ src/udev/udev-builtin-net_setup_link.c    |  1 +
++ 23 files changed, 31 insertions(+), 15 deletions(-)
+ 
++diff --git a/src/basic/linux/in6.h b/src/basic/linux/in6.h
++index 5ad396a57e..1dc007fe13 100644
++--- a/src/basic/linux/in6.h
+++++ b/src/basic/linux/in6.h
++@@ -1,10 +1,10 @@
++ /* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
++ /*
++- *	Types and definitions for AF_INET6 
++- *	Linux INET6 implementation 
+++ *	Types and definitions for AF_INET6
+++ *	Linux INET6 implementation
++  *
++  *	Authors:
++- *	Pedro Roque		<roque@di.fc.ul.pt>	
+++ *	Pedro Roque		<roque@di.fc.ul.pt>
++  *
++  *	Sources:
++  *	IPv6 Program Interfaces for BSD Systems
++@@ -19,8 +19,8 @@
++  *      2 of the License, or (at your option) any later version.
++  */
++ 
++-#ifndef _UAPI_LINUX_IN6_H
++-#define _UAPI_LINUX_IN6_H
+++#ifndef _LINUX_IN6_H
+++#define _LINUX_IN6_H
++ 
++ #include <linux/types.h>
++ #include <linux/libc-compat.h>
++@@ -97,7 +97,7 @@ struct in6_flowlabel_req {
++ 
++ 
++ /*
++- *	Bitmask constant declarations to help applications select out the 
+++ *	Bitmask constant declarations to help applications select out the
++  *	flow label and priority fields.
++  *
++  *	Note that this are in host byte order while the flowinfo field of
++@@ -298,4 +298,4 @@ struct in6_flowlabel_req {
++  * ...
++  * MRT6_MAX
++  */
++-#endif /* _UAPI_LINUX_IN6_H */
+++#endif /* _LINUX_IN6_H */
+ diff --git a/src/libsystemd-network/sd-dhcp6-client.c b/src/libsystemd-network/sd-dhcp6-client.c
+-index 66f87c4b95..de1264ae46 100644
++index e8c47f429a..359922c1b3 100644
+ --- a/src/libsystemd-network/sd-dhcp6-client.c
+ +++ b/src/libsystemd-network/sd-dhcp6-client.c
+ @@ -5,7 +5,6 @@
+@@ -68,7 +115,7 @@ index 66f87c4b95..de1264ae46 100644
+  
+  #include "sd-dhcp6-client.h"
+ diff --git a/src/libsystemd/sd-netlink/netlink-types.c b/src/libsystemd/sd-netlink/netlink-types.c
+-index 6fb6c147d9..8eda02d202 100644
++index beb926d40b..41de212242 100644
+ --- a/src/libsystemd/sd-netlink/netlink-types.c
+ +++ b/src/libsystemd/sd-netlink/netlink-types.c
+ @@ -3,6 +3,7 @@
+@@ -80,7 +127,7 @@ index 6fb6c147d9..8eda02d202 100644
+  #include <linux/netlink.h>
+  #include <linux/rtnetlink.h>
+ diff --git a/src/machine/machine-dbus.c b/src/machine/machine-dbus.c
+-index bb67beb665..f5780f1aec 100644
++index 0022a980c5..fc22e51409 100644
+ --- a/src/machine/machine-dbus.c
+ +++ b/src/machine/machine-dbus.c
+ @@ -3,6 +3,7 @@
+@@ -92,7 +139,7 @@ index bb67beb665..f5780f1aec 100644
+  /* When we include libgen.h because we need dirname() we immediately
+   * undefine basename() since libgen.h defines it as a macro to the POSIX
+ diff --git a/src/network/netdev/bond.c b/src/network/netdev/bond.c
+-index e27f36067b..8868f1da5d 100644
++index a7a4adce45..eb111a6c48 100644
+ --- a/src/network/netdev/bond.c
+ +++ b/src/network/netdev/bond.c
+ @@ -1,5 +1,6 @@
+@@ -103,7 +150,7 @@ index e27f36067b..8868f1da5d 100644
+  #include "bond.h"
+  #include "bond-util.h"
+ diff --git a/src/network/netdev/bridge.c b/src/network/netdev/bridge.c
+-index 1f59cd8b42..5fdbae7e99 100644
++index 99fb9e1c3c..ecc6ca91bf 100644
+ --- a/src/network/netdev/bridge.c
+ +++ b/src/network/netdev/bridge.c
+ @@ -1,5 +1,6 @@
+@@ -114,7 +161,7 @@ index 1f59cd8b42..5fdbae7e99 100644
+  
+  #include "bridge.h"
+ diff --git a/src/network/netdev/macsec.c b/src/network/netdev/macsec.c
+-index 82e71c3920..fbae86e216 100644
++index 77c5f8c4e7..04be1b4ab2 100644
+ --- a/src/network/netdev/macsec.c
+ +++ b/src/network/netdev/macsec.c
+ @@ -1,5 +1,6 @@
+@@ -125,19 +172,19 @@ index 82e71c3920..fbae86e216 100644
+  #include <linux/if_ether.h>
+  #include <linux/if_macsec.h>
+ diff --git a/src/network/netdev/netdev-gperf.gperf b/src/network/netdev/netdev-gperf.gperf
+-index 4e89761f2c..91251fa6ec 100644
++index 9dd081425e..130e5b3d3c 100644
+ --- a/src/network/netdev/netdev-gperf.gperf
+ +++ b/src/network/netdev/netdev-gperf.gperf
+-@@ -2,6 +2,7 @@
++@@ -3,6 +3,7 @@
+  #if __GNUC__ >= 7
+  _Pragma("GCC diagnostic ignored \"-Wimplicit-fallthrough\"")
+  #endif
+ +#include <netinet/if_ether.h>
+  #include <stddef.h>
+  #include "bareudp.h"
+- #include "bond.h"
++ #include "batadv.h"
+ diff --git a/src/network/netdev/netdev.c b/src/network/netdev/netdev.c
+-index 9f390b5781..62aeafb1e4 100644
++index 53534d4873..1cfda9469f 100644
+ --- a/src/network/netdev/netdev.c
+ +++ b/src/network/netdev/netdev.c
+ @@ -1,5 +1,6 @@
+@@ -147,10 +194,10 @@ index 9f390b5781..62aeafb1e4 100644
+  #include <net/if.h>
+  #include <netinet/in.h>
+  #include <unistd.h>
+-diff --git a/src/network/networkd-brvlan.c b/src/network/networkd-brvlan.c
+-index e53c73c30c..9bf0771b84 100644
+---- a/src/network/networkd-brvlan.c
+-+++ b/src/network/networkd-brvlan.c
++diff --git a/src/network/networkd-bridge-vlan.c b/src/network/networkd-bridge-vlan.c
++index 3153bf6984..687a26b057 100644
++--- a/src/network/networkd-bridge-vlan.c
+++++ b/src/network/networkd-bridge-vlan.c
+ @@ -4,6 +4,7 @@
+  ***/
+  
+@@ -160,7 +207,7 @@ index e53c73c30c..9bf0771b84 100644
+  #include <stdbool.h>
+  
+ diff --git a/src/network/networkd-dhcp-common.c b/src/network/networkd-dhcp-common.c
+-index 9f58121350..554d006cb8 100644
++index 249d780887..edd2e9adf8 100644
+ --- a/src/network/networkd-dhcp-common.c
+ +++ b/src/network/networkd-dhcp-common.c
+ @@ -1,7 +1,8 @@
+@@ -171,9 +218,9 @@ index 9f58121350..554d006cb8 100644
+ +#include <net/if_arp.h>
+ +#include <net/if.h>
+  
+- #include "dhcp-internal.h"
+- #include "dhcp6-internal.h"
+-@@ -10,6 +11,7 @@
++ #include "bus-error.h"
++ #include "dhcp-identifier.h"
++@@ -13,6 +14,7 @@
+  #include "networkd-dhcp-common.h"
+  #include "networkd-link.h"
+  #include "networkd-manager.h"
+@@ -182,7 +229,7 @@ index 9f58121350..554d006cb8 100644
+  #include "parse-util.h"
+  #include "socket-util.h"
+ diff --git a/src/network/networkd-dhcp-server.c b/src/network/networkd-dhcp-server.c
+-index cf279c640d..bae541029b 100644
++index 9e2faa5675..fd8d817569 100644
+ --- a/src/network/networkd-dhcp-server.c
+ +++ b/src/network/networkd-dhcp-server.c
+ @@ -1,8 +1,8 @@
+@@ -197,7 +244,7 @@ index cf279c640d..bae541029b 100644
+  #include "sd-dhcp-server.h"
+  
+ diff --git a/src/network/networkd-dhcp4.c b/src/network/networkd-dhcp4.c
+-index f3c1e5f609..e4ef6eca63 100644
++index f80adcdbcf..3311e2a718 100644
+ --- a/src/network/networkd-dhcp4.c
+ +++ b/src/network/networkd-dhcp4.c
+ @@ -1,9 +1,9 @@
+@@ -212,7 +259,7 @@ index f3c1e5f609..e4ef6eca63 100644
+  #include "escape.h"
+  #include "alloc-util.h"
+ diff --git a/src/network/networkd-dhcp6.c b/src/network/networkd-dhcp6.c
+-index 5c077c1ec8..fa98042aa5 100644
++index 2b72b618fc..d0d4cfb384 100644
+ --- a/src/network/networkd-dhcp6.c
+ +++ b/src/network/networkd-dhcp6.c
+ @@ -3,9 +3,9 @@
+@@ -227,7 +274,7 @@ index 5c077c1ec8..fa98042aa5 100644
+  #include "sd-dhcp6-client.h"
+  
+ diff --git a/src/network/networkd-link.c b/src/network/networkd-link.c
+-index 3bfe636691..e0c68c8ad3 100644
++index 9421ce1aa6..3e37cbcc39 100644
+ --- a/src/network/networkd-link.c
+ +++ b/src/network/networkd-link.c
+ @@ -1,8 +1,8 @@
+@@ -238,10 +285,10 @@ index 3bfe636691..e0c68c8ad3 100644
+  #include <linux/if.h>
+ -#include <linux/if_arp.h>
+  #include <linux/if_link.h>
+- #include <unistd.h>
+- 
++ #include <linux/netdevice.h>
++ #include <sys/socket.h>
+ diff --git a/src/network/networkd-network.c b/src/network/networkd-network.c
+-index 3254641461..f0ada419fd 100644
++index 850b4f449e..6f85d41328 100644
+ --- a/src/network/networkd-network.c
+ +++ b/src/network/networkd-network.c
+ @@ -1,5 +1,6 @@
+@@ -252,23 +299,32 @@ index 3254641461..f0ada419fd 100644
+  #include <netinet/in.h>
+  #include <linux/netdevice.h>
+ diff --git a/src/network/networkd-route.c b/src/network/networkd-route.c
+-index 0ed89584ef..e7e157c201 100644
++index 77a93beca9..3bf9ae8837 100644
+ --- a/src/network/networkd-route.c
+ +++ b/src/network/networkd-route.c
+-@@ -1,7 +1,10 @@
++@@ -1,5 +1,6 @@
+  /* SPDX-License-Identifier: LGPL-2.1-or-later */
+  
+++#include <netinet/in.h>
+  #include <linux/icmpv6.h>
+--#include <linux/ipv6_route.h>
+-+/* linux/ipv6_route.h conflicts with netinet/in.h so define manually */
+-+#ifndef IP6_RT_PRIO_USER
+-+#define IP6_RT_PRIO_USER       1024
+-+#endif
++ #include <linux/ipv6_route.h>
++ #include <linux/nexthop.h>
++diff --git a/src/network/networkd-setlink.c b/src/network/networkd-setlink.c
++index 10c312c480..e44fbb5c35 100644
++--- a/src/network/networkd-setlink.c
+++++ b/src/network/networkd-setlink.c
++@@ -1,8 +1,8 @@
++ /* SPDX-License-Identifier: LGPL-2.1-or-later */
+  
+- #include "alloc-util.h"
++ #include <netinet/in.h>
+++#include <net/if_arp.h>
++ #include <linux/if.h>
++-#include <linux/if_arp.h>
++ 
++ #include "missing_network.h"
+  #include "netlink-util.h"
+ diff --git a/src/network/test-network-tables.c b/src/network/test-network-tables.c
+-index 475cac7527..9bae6eda16 100644
++index f55e524ae9..83d5c7cef3 100644
+ --- a/src/network/test-network-tables.c
+ +++ b/src/network/test-network-tables.c
+ @@ -1,5 +1,6 @@
+@@ -279,7 +335,7 @@ index 475cac7527..9bae6eda16 100644
+  #include "dhcp6-internal.h"
+  #include "dhcp6-protocol.h"
+ diff --git a/src/shared/ethtool-util.c b/src/shared/ethtool-util.c
+-index e6fab262f2..41dd3d7df7 100644
++index f77f6943ca..0e1506e04b 100644
+ --- a/src/shared/ethtool-util.c
+ +++ b/src/shared/ethtool-util.c
+ @@ -1,5 +1,6 @@
+@@ -290,7 +346,7 @@ index e6fab262f2..41dd3d7df7 100644
+  #include <sys/ioctl.h>
+  #include <linux/ethtool.h>
+ diff --git a/src/shared/ethtool-util.h b/src/shared/ethtool-util.h
+-index f94b3e15bf..08a7e4fa09 100644
++index 7d28766624..e98a25418b 100644
+ --- a/src/shared/ethtool-util.h
+ +++ b/src/shared/ethtool-util.h
+ @@ -3,6 +3,7 @@
+@@ -302,7 +358,7 @@ index f94b3e15bf..08a7e4fa09 100644
+  
+  #include "conf-parser.h"
+ diff --git a/src/udev/net/link-config.c b/src/udev/net/link-config.c
+-index d12fd0e299..636806dc23 100644
++index 8dfe23691b..e269856337 100644
+ --- a/src/udev/net/link-config.c
+ +++ b/src/udev/net/link-config.c
+ @@ -1,5 +1,6 @@
+@@ -313,7 +369,7 @@ index d12fd0e299..636806dc23 100644
+  #include <netinet/ether.h>
+  #include <unistd.h>
+ diff --git a/src/udev/udev-builtin-net_setup_link.c b/src/udev/udev-builtin-net_setup_link.c
+-index 87e1fb133e..13876029d0 100644
++index d40251331c..89566c05f5 100644
+ --- a/src/udev/udev-builtin-net_setup_link.c
+ +++ b/src/udev/udev-builtin-net_setup_link.c
+ @@ -1,5 +1,6 @@
+@@ -323,6 +379,3 @@ index 87e1fb133e..13876029d0 100644
+  #include "alloc-util.h"
+  #include "device-util.h"
+  #include "errno-util.h"
+--- 
+-2.25.1
+-
+diff --git a/meta/recipes-core/systemd/systemd/0007-don-t-fail-if-GLOB_BRACE-and-GLOB_ALTDIRFUNC-is-not-.patch b/meta/recipes-core/systemd/systemd/0007-don-t-fail-if-GLOB_BRACE-and-GLOB_ALTDIRFUNC-is-not-.patch
+index 6865421586..28846935e0 100644
+--- a/meta/recipes-core/systemd/systemd/0007-don-t-fail-if-GLOB_BRACE-and-GLOB_ALTDIRFUNC-is-not-.patch
++++ b/meta/recipes-core/systemd/systemd/0007-don-t-fail-if-GLOB_BRACE-and-GLOB_ALTDIRFUNC-is-not-.patch
+@@ -1,8 +1,7 @@
+-From 87a14dde13c8fa68239a4ab62914a093062b3b29 Mon Sep 17 00:00:00 2001
++From e2d70a1735fc6b9d3c079814831ab0b1b2a9d1e0 Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Mon, 25 Feb 2019 14:56:21 +0800
+-Subject: [PATCH 07/26] don't fail if GLOB_BRACE and GLOB_ALTDIRFUNC is not
+- defined
++Subject: [PATCH] don't fail if GLOB_BRACE and GLOB_ALTDIRFUNC is not defined
+ 
+ If the standard library doesn't provide brace
+ expansion users just won't get it.
+@@ -17,6 +16,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+ [rebased for systemd 243]
+ Signed-off-by: Scott Murray <scott.murray@konsulko.com>
++
+ ---
+  src/basic/glob-util.c     | 12 ++++++++++++
+  src/test/test-glob-util.c | 16 ++++++++++++++++
+@@ -24,7 +24,7 @@ Signed-off-by: Scott Murray <scott.murray@konsulko.com>
+  3 files changed, 38 insertions(+)
+ 
+ diff --git a/src/basic/glob-util.c b/src/basic/glob-util.c
+-index bc0278e57f..c973f82e54 100644
++index e026b29478..815e56ef68 100644
+ --- a/src/basic/glob-util.c
+ +++ b/src/basic/glob-util.c
+ @@ -12,6 +12,12 @@
+@@ -64,7 +64,7 @@ index bc0278e57f..c973f82e54 100644
+                  return -ENOENT;
+          if (k == GLOB_NOSPACE)
+ diff --git a/src/test/test-glob-util.c b/src/test/test-glob-util.c
+-index df6444c433..79a692046e 100644
++index 50b4924679..09c0a20aee 100644
+ --- a/src/test/test-glob-util.c
+ +++ b/src/test/test-glob-util.c
+ @@ -12,6 +12,12 @@
+@@ -78,9 +78,9 @@ index df6444c433..79a692046e 100644
+ +#endif
+ +
+  static void test_glob_exists(void) {
+-         char name[] = "/tmp/test-glob_exists.XXXXXX";
+-         int fd = -1;
+-@@ -39,11 +45,13 @@ static void test_glob_no_dot(void) {
++         log_info("/* %s */", __func__);
++ 
++@@ -41,11 +47,13 @@ static void test_glob_no_dot(void) {
+          const char *fn;
+  
+          _cleanup_globfree_ glob_t g = {
+@@ -94,7 +94,7 @@ index df6444c433..79a692046e 100644
+          };
+  
+          int r;
+-@@ -51,11 +59,19 @@ static void test_glob_no_dot(void) {
++@@ -55,11 +63,19 @@ static void test_glob_no_dot(void) {
+          assert_se(mkdtemp(template));
+  
+          fn = strjoina(template, "/*");
+@@ -115,10 +115,10 @@ index df6444c433..79a692046e 100644
+  
+          (void) rm_rf(template, REMOVE_ROOT|REMOVE_PHYSICAL);
+ diff --git a/src/tmpfiles/tmpfiles.c b/src/tmpfiles/tmpfiles.c
+-index 9906c70eef..5eb63b1d57 100644
++index 7e85c50634..145c48a685 100644
+ --- a/src/tmpfiles/tmpfiles.c
+ +++ b/src/tmpfiles/tmpfiles.c
+-@@ -63,6 +63,12 @@
++@@ -66,6 +66,12 @@
+  #include "umask-util.h"
+  #include "user-util.h"
+  
+@@ -131,7 +131,7 @@ index 9906c70eef..5eb63b1d57 100644
+  /* This reads all files listed in /etc/tmpfiles.d/?*.conf and creates
+   * them in the file system. This is intended to be used to create
+   * properly owned directories beneath /tmp, /var/tmp, /run, which are
+-@@ -1936,7 +1942,9 @@ finish:
++@@ -1990,7 +1996,9 @@ finish:
+  
+  static int glob_item(Item *i, action_t action) {
+          _cleanup_globfree_ glob_t g = {
+@@ -141,7 +141,7 @@ index 9906c70eef..5eb63b1d57 100644
+          };
+          int r = 0, k;
+          char **fn;
+-@@ -1956,7 +1964,9 @@ static int glob_item(Item *i, action_t action) {
++@@ -2010,7 +2018,9 @@ static int glob_item(Item *i, action_t action) {
+  
+  static int glob_item_recursively(Item *i, fdaction_t action) {
+          _cleanup_globfree_ glob_t g = {
+@@ -151,6 +151,3 @@ index 9906c70eef..5eb63b1d57 100644
+          };
+          int r = 0, k;
+          char **fn;
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0008-add-missing-FTW_-macros-for-musl.patch b/meta/recipes-core/systemd/systemd/0008-add-missing-FTW_-macros-for-musl.patch
+index 94cdc2efde..1de7ccf150 100644
+--- a/meta/recipes-core/systemd/systemd/0008-add-missing-FTW_-macros-for-musl.patch
++++ b/meta/recipes-core/systemd/systemd/0008-add-missing-FTW_-macros-for-musl.patch
+@@ -1,7 +1,7 @@
+-From 8caea3fe87d55fd16de7d1b8266239fa954cb498 Mon Sep 17 00:00:00 2001
++From 3410d82c9d07aee3e951fc6ae0b41fc1a594e00d Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Mon, 25 Feb 2019 15:00:06 +0800
+-Subject: [PATCH 08/26] add missing FTW_ macros for musl
++Subject: [PATCH] add missing FTW_ macros for musl
+ 
+ This is to avoid build failures like below for musl.
+ 
+@@ -10,6 +10,7 @@ This is to avoid build failures like below for musl.
+ Upstream-Status: Inappropriate [musl specific]
+ 
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
++
+ ---
+  src/basic/missing_type.h | 20 ++++++++++++++++++++
+  1 file changed, 20 insertions(+)
+@@ -42,6 +43,3 @@ index aeaf6ad5ec..3df1084ef2 100644
+ +#ifndef FTW_SKIP_SIBLINGS
+ +#define FTW_SKIP_SIBLINGS 3
+ +#endif
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0009-fix-missing-of-__register_atfork-for-non-glibc-build.patch b/meta/recipes-core/systemd/systemd/0009-fix-missing-of-__register_atfork-for-non-glibc-build.patch
+index 76cc75cf6a..4670c232a5 100644
+--- a/meta/recipes-core/systemd/systemd/0009-fix-missing-of-__register_atfork-for-non-glibc-build.patch
++++ b/meta/recipes-core/systemd/systemd/0009-fix-missing-of-__register_atfork-for-non-glibc-build.patch
+@@ -1,17 +1,18 @@
+-From d8e4f0aa1760e4c7bb8476beecd35025c9cbb95a Mon Sep 17 00:00:00 2001
++From 1e3bc870ded807cff0d3771dd89a850d020df032 Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Mon, 25 Feb 2019 15:03:47 +0800
+-Subject: [PATCH 09/26] fix missing of __register_atfork for non-glibc builds
++Subject: [PATCH] fix missing of __register_atfork for non-glibc builds
+ 
+ Upstream-Status: Inappropriate [musl specific]
+ 
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
++
+ ---
+  src/basic/process-util.c | 7 +++++++
+  1 file changed, 7 insertions(+)
+ 
+ diff --git a/src/basic/process-util.c b/src/basic/process-util.c
+-index 0851613fc9..4417101569 100644
++index 14259ea8df..18681838ef 100644
+ --- a/src/basic/process-util.c
+ +++ b/src/basic/process-util.c
+ @@ -18,6 +18,9 @@
+@@ -24,7 +25,7 @@ index 0851613fc9..4417101569 100644
+  
+  #include "alloc-util.h"
+  #include "architecture.h"
+-@@ -1143,11 +1146,15 @@ void reset_cached_pid(void) {
++@@ -1202,11 +1205,15 @@ void reset_cached_pid(void) {
+          cached_pid = CACHED_PID_UNSET;
+  }
+  
+@@ -40,6 +41,3 @@ index 0851613fc9..4417101569 100644
+  
+  pid_t getpid_cached(void) {
+          static bool installed = false;
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0010-Use-uintmax_t-for-handling-rlim_t.patch b/meta/recipes-core/systemd/systemd/0010-Use-uintmax_t-for-handling-rlim_t.patch
+index aeacd865ae..e6bb37a65e 100644
+--- a/meta/recipes-core/systemd/systemd/0010-Use-uintmax_t-for-handling-rlim_t.patch
++++ b/meta/recipes-core/systemd/systemd/0010-Use-uintmax_t-for-handling-rlim_t.patch
+@@ -1,7 +1,7 @@
+-From e45bb02174812e4935214f42a18725be320770d5 Mon Sep 17 00:00:00 2001
++From eeacb75025d8f537d54c35256c5730c9aab15cde Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Mon, 25 Feb 2019 15:12:41 +0800
+-Subject: [PATCH 10/26] Use uintmax_t for handling rlim_t
++Subject: [PATCH] Use uintmax_t for handling rlim_t
+ 
+ PRIu{32,64} is not right format to represent rlim_t type
+ therefore use %ju and typecast the rlim_t variables to
+@@ -20,11 +20,12 @@ Upstream-Status: Denied [https://github.com/systemd/systemd/pull/7199]
+ Signed-off-by: Khem Raj <raj.khem@gmail.com>
+ [Rebased for v241]
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
++
+ ---
+  src/basic/format-util.h |  8 +-------
+- src/basic/rlimit-util.c | 10 +++++-----
++ src/basic/rlimit-util.c | 12 ++++++------
+  src/core/execute.c      |  4 ++--
+- 3 files changed, 8 insertions(+), 14 deletions(-)
++ 3 files changed, 9 insertions(+), 15 deletions(-)
+ 
+ diff --git a/src/basic/format-util.h b/src/basic/format-util.h
+ index b7e18768e3..3195ab205d 100644
+@@ -46,10 +47,19 @@ index b7e18768e3..3195ab205d 100644
+  #if SIZEOF_DEV_T == 8
+  #  define DEV_FMT "%" PRIu64
+ diff --git a/src/basic/rlimit-util.c b/src/basic/rlimit-util.c
+-index 880976312c..9e1b61cd4a 100644
++index 23d108d5df..3e6fb438d7 100644
+ --- a/src/basic/rlimit-util.c
+ +++ b/src/basic/rlimit-util.c
+-@@ -306,13 +306,13 @@ int rlimit_format(const struct rlimit *rl, char **ret) {
++@@ -43,7 +43,7 @@ int setrlimit_closest(int resource, const struct rlimit *rlim) {
++             fixed.rlim_max == highest.rlim_max)
++                 return 0;
++ 
++-        log_debug("Failed at setting rlimit " RLIM_FMT " for resource RLIMIT_%s. Will attempt setting value " RLIM_FMT " instead.", rlim->rlim_max, rlimit_to_string(resource), fixed.rlim_max);
+++        log_debug("Failed at setting rlimit " RLIM_FMT " for resource RLIMIT_%s. Will attempt setting value " RLIM_FMT " instead.", (uintmax_t)rlim->rlim_max, rlimit_to_string(resource), (uintmax_t)fixed.rlim_max);
++ 
++         if (setrlimit(resource, &fixed) < 0)
++                 return -errno;
++@@ -308,13 +308,13 @@ int rlimit_format(const struct rlimit *rl, char **ret) {
+          if (rl->rlim_cur >= RLIM_INFINITY && rl->rlim_max >= RLIM_INFINITY)
+                  s = strdup("infinity");
+          else if (rl->rlim_cur >= RLIM_INFINITY)
+@@ -67,7 +77,7 @@ index 880976312c..9e1b61cd4a 100644
+  
+          if (!s)
+                  return -ENOMEM;
+-@@ -403,7 +403,7 @@ int rlimit_nofile_safe(void) {
++@@ -405,7 +405,7 @@ int rlimit_nofile_safe(void) {
+  
+          rl.rlim_cur = FD_SETSIZE;
+          if (setrlimit(RLIMIT_NOFILE, &rl) < 0)
+@@ -77,10 +87,10 @@ index 880976312c..9e1b61cd4a 100644
+          return 1;
+  }
+ diff --git a/src/core/execute.c b/src/core/execute.c
+-index 89632e0582..335283776c 100644
++index 2a64675c5f..dca1e0e3b6 100644
+ --- a/src/core/execute.c
+ +++ b/src/core/execute.c
+-@@ -5288,9 +5288,9 @@ void exec_context_dump(const ExecContext *c, FILE* f, const char *prefix) {
++@@ -5391,9 +5391,9 @@ void exec_context_dump(const ExecContext *c, FILE* f, const char *prefix) {
+          for (unsigned i = 0; i < RLIM_NLIMITS; i++)
+                  if (c->rlimit[i]) {
+                          fprintf(f, "%sLimit%s: " RLIM_FMT "\n",
+@@ -92,6 +102,3 @@ index 89632e0582..335283776c 100644
+                  }
+  
+          if (c->ioprio_set) {
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0011-test-sizeof.c-Disable-tests-for-missing-typedefs-in-.patch b/meta/recipes-core/systemd/systemd/0011-test-sizeof.c-Disable-tests-for-missing-typedefs-in-.patch
+index 6d7fdbcb64..897e332f33 100644
+--- a/meta/recipes-core/systemd/systemd/0011-test-sizeof.c-Disable-tests-for-missing-typedefs-in-.patch
++++ b/meta/recipes-core/systemd/systemd/0011-test-sizeof.c-Disable-tests-for-missing-typedefs-in-.patch
+@@ -1,13 +1,13 @@
+-From d1db531ddd3bbf94d5e764b7917bcc8684ff6357 Mon Sep 17 00:00:00 2001
++From fa29a572faaeb6fb9ed0bc6802d17139773e1908 Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Wed, 28 Feb 2018 21:25:22 -0800
+-Subject: [PATCH 11/26] test-sizeof.c: Disable tests for missing typedefs in
+- musl
++Subject: [PATCH] test-sizeof.c: Disable tests for missing typedefs in musl
+ 
+ Upstream-Status: Inappropriate [musl specific]
+ 
+ Signed-off-by: Khem Raj <raj.khem@gmail.com>
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
++
+ ---
+  src/test/test-sizeof.c | 4 ++++
+  1 file changed, 4 insertions(+)
+@@ -37,6 +37,3 @@ index 3c9dc180fa..e1a59d408c 100644
+          info(pid_t);
+          info(uid_t);
+          info(gid_t);
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0012-don-t-pass-AT_SYMLINK_NOFOLLOW-flag-to-faccessat.patch b/meta/recipes-core/systemd/systemd/0012-don-t-pass-AT_SYMLINK_NOFOLLOW-flag-to-faccessat.patch
+index c15b6e7d82..3bf706fc55 100644
+--- a/meta/recipes-core/systemd/systemd/0012-don-t-pass-AT_SYMLINK_NOFOLLOW-flag-to-faccessat.patch
++++ b/meta/recipes-core/systemd/systemd/0012-don-t-pass-AT_SYMLINK_NOFOLLOW-flag-to-faccessat.patch
+@@ -1,7 +1,7 @@
+-From 03e89da266edf70121a19ffc32a78cc3b97585ef Mon Sep 17 00:00:00 2001
++From 88c8922f9e4d221402d9cb2e04b9c82e89125827 Mon Sep 17 00:00:00 2001
+ From: Andre McCurdy <armccurdy@gmail.com>
+ Date: Tue, 10 Oct 2017 14:33:30 -0700
+-Subject: [PATCH 12/26] don't pass AT_SYMLINK_NOFOLLOW flag to faccessat()
++Subject: [PATCH] don't pass AT_SYMLINK_NOFOLLOW flag to faccessat()
+ 
+ Avoid using AT_SYMLINK_NOFOLLOW flag. It doesn't seem like the right
+ thing to do and it's not portable (not supported by musl). See:
+@@ -25,20 +25,22 @@ just historical and not actually necessary or desired behaviour?
+ Upstream-Status: Inappropriate [musl specific]
+ 
+ Signed-off-by: Andre McCurdy <armccurdy@gmail.com>
++
+ ---
+- src/basic/fs-util.h          | 22 +++++++++++++++++++++-
++ src/basic/fs-util.h          | 23 +++++++++++++++++++++--
+  src/shared/base-filesystem.c |  6 +++---
+- 2 files changed, 24 insertions(+), 4 deletions(-)
++ 2 files changed, 24 insertions(+), 5 deletions(-)
+ 
+ diff --git a/src/basic/fs-util.h b/src/basic/fs-util.h
+-index 5dc8853eac..0491b3dae2 100644
++index 7f15b558ca..4263298cad 100644
+ --- a/src/basic/fs-util.h
+ +++ b/src/basic/fs-util.h
+-@@ -43,7 +43,27 @@ int futimens_opath(int fd, const struct timespec ts[2]);
++@@ -47,8 +47,27 @@ int futimens_opath(int fd, const struct timespec ts[2]);
+  int fd_warn_permissions(const char *path, int fd);
+  int stat_warn_permissions(const char *path, const struct stat *st);
+  
+--#define laccess(path, mode) faccessat(AT_FDCWD, (path), (mode), AT_SYMLINK_NOFOLLOW)
++-#define laccess(path, mode)                                             \
++-        (faccessat(AT_FDCWD, (path), (mode), AT_SYMLINK_NOFOLLOW) < 0 ? -errno : 0)
+ +/*
+ +   Avoid using AT_SYMLINK_NOFOLLOW flag. It doesn't seem like the right thing to
+ +   do and it's not portable (not supported by musl). See:
+@@ -64,19 +66,19 @@ index 5dc8853eac..0491b3dae2 100644
+  int touch_file(const char *path, bool parents, usec_t stamp, uid_t uid, gid_t gid, mode_t mode);
+  int touch(const char *path);
+ diff --git a/src/shared/base-filesystem.c b/src/shared/base-filesystem.c
+-index 1d05409086..1ed06c31ab 100644
++index 016eb7b82a..b1967f9f2f 100644
+ --- a/src/shared/base-filesystem.c
+ +++ b/src/shared/base-filesystem.c
+-@@ -54,7 +54,7 @@ int base_filesystem_create(const char *root, uid_t uid, gid_t gid) {
++@@ -53,7 +53,7 @@ int base_filesystem_create(const char *root, uid_t uid, gid_t gid) {
+                  return log_error_errno(errno, "Failed to open root file system: %m");
+  
+-         for (i = 0; i < ELEMENTSOF(table); i ++) {
++         for (size_t i = 0; i < ELEMENTSOF(table); i++) {
+ -                if (faccessat(fd, table[i].dir, F_OK, AT_SYMLINK_NOFOLLOW) >= 0)
+ +                if (faccessat(fd, table[i].dir, F_OK, 0) >= 0)
+                          continue;
+  
+                  if (table[i].target) {
+-@@ -62,7 +62,7 @@ int base_filesystem_create(const char *root, uid_t uid, gid_t gid) {
++@@ -61,7 +61,7 @@ int base_filesystem_create(const char *root, uid_t uid, gid_t gid) {
+  
+                          /* check if one of the targets exists */
+                          NULSTR_FOREACH(s, table[i].target) {
+@@ -85,7 +87,7 @@ index 1d05409086..1ed06c31ab 100644
+                                          continue;
+  
+                                  /* check if a specific file exists at the target path */
+-@@ -73,7 +73,7 @@ int base_filesystem_create(const char *root, uid_t uid, gid_t gid) {
++@@ -72,7 +72,7 @@ int base_filesystem_create(const char *root, uid_t uid, gid_t gid) {
+                                          if (!p)
+                                                  return log_oom();
+  
+@@ -94,6 +96,3 @@ index 1d05409086..1ed06c31ab 100644
+                                                  continue;
+                                  }
+  
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0013-Define-glibc-compatible-basename-for-non-glibc-syste.patch b/meta/recipes-core/systemd/systemd/0013-Define-glibc-compatible-basename-for-non-glibc-syste.patch
+index 89736bcfde..74008714c1 100644
+--- a/meta/recipes-core/systemd/systemd/0013-Define-glibc-compatible-basename-for-non-glibc-syste.patch
++++ b/meta/recipes-core/systemd/systemd/0013-Define-glibc-compatible-basename-for-non-glibc-syste.patch
+@@ -1,8 +1,7 @@
+-From dd134880e9a16595ab473934577e873c748e9c7a Mon Sep 17 00:00:00 2001
++From e07e9b998ad61b09555bc809aa15de9d2516787a Mon Sep 17 00:00:00 2001
+ From: Khem Raj <raj.khem@gmail.com>
+ Date: Sun, 27 May 2018 08:36:44 -0700
+-Subject: [PATCH 13/26] Define glibc compatible basename() for non-glibc
+- systems
++Subject: [PATCH] Define glibc compatible basename() for non-glibc systems
+ 
+ Fixes builds with musl, even though systemd is adamant about
+ using non-posix basename implementation, we have a way out
+@@ -10,12 +9,13 @@ using non-posix basename implementation, we have a way out
+ Upstream-Status: Inappropriate [musl specific]
+ 
+ Signed-off-by: Khem Raj <raj.khem@gmail.com>
++
+ ---
+  src/machine/machine-dbus.c | 5 +++++
+  1 file changed, 5 insertions(+)
+ 
+ diff --git a/src/machine/machine-dbus.c b/src/machine/machine-dbus.c
+-index f5780f1aec..aec5825b3e 100644
++index fc22e51409..1fed07b941 100644
+ --- a/src/machine/machine-dbus.c
+ +++ b/src/machine/machine-dbus.c
+ @@ -11,6 +11,11 @@
+@@ -30,6 +30,3 @@ index f5780f1aec..aec5825b3e 100644
+  #include "alloc-util.h"
+  #include "bus-common-errors.h"
+  #include "bus-get-properties.h"
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0014-Do-not-disable-buffering-when-writing-to-oom_score_a.patch b/meta/recipes-core/systemd/systemd/0014-Do-not-disable-buffering-when-writing-to-oom_score_a.patch
+index e95d2ae078..c5e20cbb80 100644
+--- a/meta/recipes-core/systemd/systemd/0014-Do-not-disable-buffering-when-writing-to-oom_score_a.patch
++++ b/meta/recipes-core/systemd/systemd/0014-Do-not-disable-buffering-when-writing-to-oom_score_a.patch
+@@ -1,7 +1,7 @@
+-From 55af446156da863b5b36a1109845858956a4c274 Mon Sep 17 00:00:00 2001
++From 2f048d13e100158320bda248635b3c533ac9717b Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Wed, 4 Jul 2018 15:00:44 +0800
+-Subject: [PATCH 14/26] Do not disable buffering when writing to oom_score_adj
++Subject: [PATCH] Do not disable buffering when writing to oom_score_adj
+ 
+ On musl, disabling buffering when writing to oom_score_adj will
+ cause the following error.
+@@ -19,15 +19,16 @@ Upstream-Status: Inappropriate [musl specific]
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+ [rebased for systemd 243]
+ Signed-off-by: Scott Murray <scott.murray@konsulko.com>
++
+ ---
+  src/basic/process-util.c | 2 +-
+  1 file changed, 1 insertion(+), 1 deletion(-)
+ 
+ diff --git a/src/basic/process-util.c b/src/basic/process-util.c
+-index 4417101569..556dab8ebf 100644
++index 18681838ef..0fa71ccce0 100644
+ --- a/src/basic/process-util.c
+ +++ b/src/basic/process-util.c
+-@@ -1536,7 +1536,7 @@ int set_oom_score_adjust(int value) {
++@@ -1606,7 +1606,7 @@ int set_oom_score_adjust(int value) {
+          sprintf(t, "%i", value);
+  
+          return write_string_file("/proc/self/oom_score_adj", t,
+@@ -36,6 +37,3 @@ index 4417101569..556dab8ebf 100644
+  }
+  
+  int pidfd_get_pid(int fd, pid_t *ret) {
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0015-distinguish-XSI-compliant-strerror_r-from-GNU-specif.patch b/meta/recipes-core/systemd/systemd/0015-distinguish-XSI-compliant-strerror_r-from-GNU-specif.patch
+index 5cdcf84dc1..39804bd364 100644
+--- a/meta/recipes-core/systemd/systemd/0015-distinguish-XSI-compliant-strerror_r-from-GNU-specif.patch
++++ b/meta/recipes-core/systemd/systemd/0015-distinguish-XSI-compliant-strerror_r-from-GNU-specif.patch
+@@ -1,7 +1,7 @@
+-From e382845aed90cfe4496a8351d57d4466dd2e9a9c Mon Sep 17 00:00:00 2001
++From 45148529792c0cda32fdd61610c8d5a700d541fa Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Tue, 10 Jul 2018 15:40:17 +0800
+-Subject: [PATCH 15/26] distinguish XSI-compliant strerror_r from GNU-specifi
++Subject: [PATCH] distinguish XSI-compliant strerror_r from GNU-specifi
+  strerror_r
+ 
+ XSI-compliant strerror_r and GNU-specifi strerror_r are different.
+@@ -18,33 +18,17 @@ assigned to (char *) variable, resulting in segment fault.
+ Upstream-Status: Inappropriate [musl specific]
+ 
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
++
+ ---
+- src/journal/journal-send.c        | 5 +++++
+- src/libsystemd/sd-bus/bus-error.c | 5 +++++
++ src/libsystemd/sd-bus/bus-error.c        | 5 +++++
++ src/libsystemd/sd-journal/journal-send.c | 5 +++++
+  2 files changed, 10 insertions(+)
+ 
+-diff --git a/src/journal/journal-send.c b/src/journal/journal-send.c
+-index e8e6ad555b..8ca5271d02 100644
+---- a/src/journal/journal-send.c
+-+++ b/src/journal/journal-send.c
+-@@ -348,7 +348,12 @@ static int fill_iovec_perror_and_send(const char *message, int skip, struct iove
+-                 char* j;
+- 
+-                 errno = 0;
+-+#ifndef __GLIBC__
+-+                strerror_r(_saved_errno_, buffer + 8 + k, n - 8 - k);
+-+                j = buffer + 8 + k;
+-+#else
+-                 j = strerror_r(_saved_errno_, buffer + 8 + k, n - 8 - k);
+-+#endif
+-                 if (errno == 0) {
+-                         char error[STRLEN("ERRNO=") + DECIMAL_STR_MAX(int) + 1];
+- 
+ diff --git a/src/libsystemd/sd-bus/bus-error.c b/src/libsystemd/sd-bus/bus-error.c
+-index 8da2024a50..9605a9b869 100644
++index 7483b46a11..c49be29e46 100644
+ --- a/src/libsystemd/sd-bus/bus-error.c
+ +++ b/src/libsystemd/sd-bus/bus-error.c
+-@@ -392,7 +392,12 @@ static void bus_error_strerror(sd_bus_error *e, int error) {
++@@ -404,7 +404,12 @@ static void bus_error_strerror(sd_bus_error *e, int error) {
+                          return;
+  
+                  errno = 0;
+@@ -57,6 +41,20 @@ index 8da2024a50..9605a9b869 100644
+                  if (errno == ERANGE || strlen(x) >= k - 1) {
+                          free(m);
+                          k *= 2;
+--- 
+-2.27.0
+-
++diff --git a/src/libsystemd/sd-journal/journal-send.c b/src/libsystemd/sd-journal/journal-send.c
++index e8e6ad555b..8ca5271d02 100644
++--- a/src/libsystemd/sd-journal/journal-send.c
+++++ b/src/libsystemd/sd-journal/journal-send.c
++@@ -348,7 +348,12 @@ static int fill_iovec_perror_and_send(const char *message, int skip, struct iove
++                 char* j;
++ 
++                 errno = 0;
+++#ifndef __GLIBC__
+++                strerror_r(_saved_errno_, buffer + 8 + k, n - 8 - k);
+++                j = buffer + 8 + k;
+++#else
++                 j = strerror_r(_saved_errno_, buffer + 8 + k, n - 8 - k);
+++#endif
++                 if (errno == 0) {
++                         char error[STRLEN("ERRNO=") + DECIMAL_STR_MAX(int) + 1];
++ 
+diff --git a/meta/recipes-core/systemd/systemd/0016-Hide-__start_BUS_ERROR_MAP-and-__stop_BUS_ERROR_MAP.patch b/meta/recipes-core/systemd/systemd/0016-Hide-__start_BUS_ERROR_MAP-and-__stop_BUS_ERROR_MAP.patch
+index 9a125de638..365e2a36f1 100644
+--- a/meta/recipes-core/systemd/systemd/0016-Hide-__start_BUS_ERROR_MAP-and-__stop_BUS_ERROR_MAP.patch
++++ b/meta/recipes-core/systemd/systemd/0016-Hide-__start_BUS_ERROR_MAP-and-__stop_BUS_ERROR_MAP.patch
+@@ -1,7 +1,7 @@
+-From 0c7af5f288231a8c0545e169e01ba5ee173cafe7 Mon Sep 17 00:00:00 2001
++From 02a2772889d6cb08c9ca0561b52e7a9a80e50497 Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Mon, 25 Feb 2019 15:18:00 +0800
+-Subject: [PATCH 16/26] Hide __start_BUS_ERROR_MAP and __stop_BUS_ERROR_MAP
++Subject: [PATCH] Hide __start_BUS_ERROR_MAP and __stop_BUS_ERROR_MAP
+ 
+ for currently unknown reasons they get exported to the shared libries
+ even without being listed in the sym file
+@@ -11,12 +11,13 @@ Upstream-Status: Pending
+ Signed-off-by: Khem Raj <raj.khem@gmail.com>
+ [Rebased for v241]
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
++
+ ---
+  src/libsystemd/sd-bus/bus-error.c | 4 ++--
+  1 file changed, 2 insertions(+), 2 deletions(-)
+ 
+ diff --git a/src/libsystemd/sd-bus/bus-error.c b/src/libsystemd/sd-bus/bus-error.c
+-index 9605a9b869..38b6cf90c3 100644
++index c49be29e46..90731bd7e7 100644
+ --- a/src/libsystemd/sd-bus/bus-error.c
+ +++ b/src/libsystemd/sd-bus/bus-error.c
+ @@ -55,8 +55,8 @@ BUS_ERROR_MAP_ELF_REGISTER const sd_bus_error_map bus_standard_errors[] = {
+@@ -30,6 +31,3 @@ index 9605a9b869..38b6cf90c3 100644
+  
+  /* Additional maps registered with sd_bus_error_add_map() are in this
+   * NULL terminated array */
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0017-missing_type.h-add-__compar_d_fn_t-definition.patch b/meta/recipes-core/systemd/systemd/0017-missing_type.h-add-__compar_d_fn_t-definition.patch
+index 31747c6b40..8a6c03f312 100644
+--- a/meta/recipes-core/systemd/systemd/0017-missing_type.h-add-__compar_d_fn_t-definition.patch
++++ b/meta/recipes-core/systemd/systemd/0017-missing_type.h-add-__compar_d_fn_t-definition.patch
+@@ -1,7 +1,7 @@
+-From 32dd7a47b87793cd836ab4bb776d1524f24c2d58 Mon Sep 17 00:00:00 2001
++From 47c4ac80689077b1eb86cf05b4326b1ac345aedf Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Mon, 25 Feb 2019 15:27:54 +0800
+-Subject: [PATCH 17/26] missing_type.h: add __compar_d_fn_t definition
++Subject: [PATCH] missing_type.h: add __compar_d_fn_t definition
+ 
+ Fix the following compile failure:
+ src/basic/util.h:71:18: error: unknown type name '__compar_d_fn_t'; did you mean '__compar_fn_t'?
+@@ -9,6 +9,7 @@ src/basic/util.h:71:18: error: unknown type name '__compar_d_fn_t'; did you mean
+ Upstream-Status: Inappropriate [musl specific]
+ 
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
++
+ ---
+  src/basic/missing_type.h | 1 +
+  1 file changed, 1 insertion(+)
+@@ -25,6 +26,3 @@ index 3df1084ef2..697aa7f58a 100644
+  #endif
+  
+  #ifndef __COMPAR_FN_T
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0018-avoid-redefinition-of-prctl_mm_map-structure.patch b/meta/recipes-core/systemd/systemd/0018-avoid-redefinition-of-prctl_mm_map-structure.patch
+index 56d361a213..e75935a280 100644
+--- a/meta/recipes-core/systemd/systemd/0018-avoid-redefinition-of-prctl_mm_map-structure.patch
++++ b/meta/recipes-core/systemd/systemd/0018-avoid-redefinition-of-prctl_mm_map-structure.patch
+@@ -1,7 +1,7 @@
+-From bfc3416edeb69082ac9b9c9e844f12d7b45bb006 Mon Sep 17 00:00:00 2001
++From 2cb33d8896a4ad2d3b489fed51f17d5e45dfb4fc Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Mon, 25 Feb 2019 15:44:54 +0800
+-Subject: [PATCH 18/26] avoid redefinition of prctl_mm_map structure
++Subject: [PATCH] avoid redefinition of prctl_mm_map structure
+ 
+ Fix the following compile failure:
+ error: redefinition of 'struct prctl_mm_map'
+@@ -9,6 +9,7 @@ error: redefinition of 'struct prctl_mm_map'
+ Upstream-Status: Inappropriate [musl specific]
+ 
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
++
+ ---
+  src/basic/missing_prctl.h | 2 ++
+  1 file changed, 2 insertions(+)
+@@ -27,6 +28,3 @@ index ab851306ba..5547cad875 100644
+  
+  /* 58319057b7847667f0c9585b9de0e8932b0fdb08 (4.3) */
+  #ifndef PR_CAP_AMBIENT
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0019-Handle-missing-LOCK_EX.patch b/meta/recipes-core/systemd/systemd/0019-Handle-missing-LOCK_EX.patch
+index 6ca196489b..629c103627 100644
+--- a/meta/recipes-core/systemd/systemd/0019-Handle-missing-LOCK_EX.patch
++++ b/meta/recipes-core/systemd/systemd/0019-Handle-missing-LOCK_EX.patch
+@@ -1,16 +1,17 @@
+-From e427f03de2c56e868bb0f24aa231315b2dae1b71 Mon Sep 17 00:00:00 2001
++From 200a2a2e4f04a7b7078dd455fafbd6774240e30b Mon Sep 17 00:00:00 2001
+ From: Alex Kiernan <alex.kiernan@gmail.com>
+ Date: Fri, 7 Aug 2020 15:19:27 +0000
+-Subject: [PATCH 19/26] Handle missing LOCK_EX
++Subject: [PATCH] Handle missing LOCK_EX
+ 
+ Upstream-Status: Inappropriate [musl specific]
+ Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
++
+ ---
+  src/partition/makefs.c | 1 +
+  1 file changed, 1 insertion(+)
+ 
+ diff --git a/src/partition/makefs.c b/src/partition/makefs.c
+-index fd924d2231..b97580fdcc 100644
++index 7c94fbfedb..42f966722d 100644
+ --- a/src/partition/makefs.c
+ +++ b/src/partition/makefs.c
+ @@ -6,6 +6,7 @@
+@@ -21,6 +22,3 @@ index fd924d2231..b97580fdcc 100644
+  
+  #include "alloc-util.h"
+  #include "blockdev-util.h"
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0020-Fix-incompatible-pointer-type-struct-sockaddr_un.patch b/meta/recipes-core/systemd/systemd/0020-Fix-incompatible-pointer-type-struct-sockaddr_un.patch
+index f74de43849..ea6e82f466 100644
+--- a/meta/recipes-core/systemd/systemd/0020-Fix-incompatible-pointer-type-struct-sockaddr_un.patch
++++ b/meta/recipes-core/systemd/systemd/0020-Fix-incompatible-pointer-type-struct-sockaddr_un.patch
+@@ -1,7 +1,7 @@
+-From 9abbc5e69e21aef0d4d4567e69302fa660b76c53 Mon Sep 17 00:00:00 2001
++From 6445b7737a89256f35adc56701a5c47b48618ced Mon Sep 17 00:00:00 2001
+ From: Alex Kiernan <alex.kiernan@gmail.com>
+ Date: Fri, 7 Aug 2020 15:20:17 +0000
+-Subject: [PATCH 20/26] Fix incompatible pointer type struct sockaddr_un *
++Subject: [PATCH] Fix incompatible pointer type struct sockaddr_un *
+ 
+ | ../../../../../../workspace/sources/systemd/src/nspawn/nspawn.c: In function 'cant_be_in_netns':
+ | ../../../../../../workspace/sources/systemd/src/nspawn/nspawn.c:4893:25: error: passing argument 2 of 'connect' from incompatible pointer type [-Werror=incompatible-pointer-types]
+@@ -18,15 +18,16 @@ Subject: [PATCH 20/26] Fix incompatible pointer type struct sockaddr_un *
+ 
+ Upstream-Status: Inappropriate [musl specific]
+ Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
++
+ ---
+  src/nspawn/nspawn.c | 2 +-
+  1 file changed, 1 insertion(+), 1 deletion(-)
+ 
+ diff --git a/src/nspawn/nspawn.c b/src/nspawn/nspawn.c
+-index 0842731c18..3528b7ff14 100644
++index 04685fecba..90b12bb5bd 100644
+ --- a/src/nspawn/nspawn.c
+ +++ b/src/nspawn/nspawn.c
+-@@ -5084,7 +5084,7 @@ static int cant_be_in_netns(void) {
++@@ -5354,7 +5354,7 @@ static int cant_be_in_netns(void) {
+          if (fd < 0)
+                  return log_error_errno(errno, "Failed to allocate udev control socket: %m");
+  
+@@ -35,6 +36,3 @@ index 0842731c18..3528b7ff14 100644
+  
+                  if (errno == ENOENT || ERRNO_IS_DISCONNECT(errno))
+                          return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP),
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0021-test-json.c-define-M_PIl.patch b/meta/recipes-core/systemd/systemd/0021-test-json.c-define-M_PIl.patch
+index fa6652a5bf..60c12b0740 100644
+--- a/meta/recipes-core/systemd/systemd/0021-test-json.c-define-M_PIl.patch
++++ b/meta/recipes-core/systemd/systemd/0021-test-json.c-define-M_PIl.patch
+@@ -1,7 +1,7 @@
+-From 1f5bc54bed0b365e7e448c26f6c792dbe8b3b198 Mon Sep 17 00:00:00 2001
++From ae71bf2b97dc9d4760defd83463c1d305f332f22 Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Mon, 25 Feb 2019 16:53:06 +0800
+-Subject: [PATCH 21/26] test-json.c: define M_PIl
++Subject: [PATCH] test-json.c: define M_PIl
+ 
+ Fix the following compile failure:
+ src/test/test-json.c:305:50: error: 'M_PIl' undeclared (first use in this function); did you mean 'M_PI'?
+@@ -9,6 +9,7 @@ src/test/test-json.c:305:50: error: 'M_PIl' undeclared (first use in this functi
+ Upstream-Status: Inappropriate [musl specific]
+ 
+ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
++
+ ---
+  src/test/test-json.c | 4 ++++
+  1 file changed, 4 insertions(+)
+@@ -28,6 +29,3 @@ index 1d4b11945e..572c8cf9d0 100644
+  static void test_tokenizer(const char *data, ...) {
+          unsigned line = 0, column = 0;
+          void *state = NULL;
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0022-do-not-disable-buffer-in-writing-files.patch b/meta/recipes-core/systemd/systemd/0022-do-not-disable-buffer-in-writing-files.patch
+index 675fd20f11..6998bf0dd0 100644
+--- a/meta/recipes-core/systemd/systemd/0022-do-not-disable-buffer-in-writing-files.patch
++++ b/meta/recipes-core/systemd/systemd/0022-do-not-disable-buffer-in-writing-files.patch
+@@ -1,7 +1,7 @@
+-From 564dba5ad0cd884e3f69fa19ca64095413578ea5 Mon Sep 17 00:00:00 2001
++From 3198690c2dbb4b457a04ef21914dc4d531540273 Mon Sep 17 00:00:00 2001
+ From: Chen Qi <Qi.Chen@windriver.com>
+ Date: Fri, 1 Mar 2019 15:22:15 +0800
+-Subject: [PATCH 22/26] do not disable buffer in writing files
++Subject: [PATCH] do not disable buffer in writing files
+ 
+ Do not disable buffer in writing files, otherwise we get
+ failure at boot for musl like below.
+@@ -18,32 +18,31 @@ Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+ Signed-off-by: Andrej Valek <andrej.valek@siemens.com>
+ [rebased for systemd 243]
+ Signed-off-by: Scott Murray <scott.murray@konsulko.com>
++
+ ---
+  src/basic/cgroup-util.c                 | 10 +++++-----
+  src/basic/procfs-util.c                 |  4 ++--
+- src/basic/smack-util.c                  |  2 +-
++ src/basic/sysctl-util.c                 |  2 +-
+  src/basic/util.c                        |  2 +-
+  src/binfmt/binfmt.c                     |  6 +++---
+  src/core/main.c                         |  4 ++--
+  src/core/smack-setup.c                  |  8 ++++----
+  src/hibernate-resume/hibernate-resume.c |  2 +-
+  src/libsystemd/sd-device/sd-device.c    |  2 +-
+- src/login/logind-dbus.c                 |  2 +-
+  src/nspawn/nspawn-cgroup.c              |  2 +-
+  src/nspawn/nspawn.c                     |  6 +++---
+  src/shared/cgroup-setup.c               |  4 ++--
+- src/shared/sysctl-util.c                |  2 +-
++ src/shared/mount-util.c                 |  4 ++--
++ src/shared/smack-util.c                 |  2 +-
+  src/sleep/sleep.c                       |  8 ++++----
+- src/udev/udevadm-trigger.c              |  2 +-
+- src/udev/udevd.c                        |  2 +-
+  src/vconsole/vconsole-setup.c           |  2 +-
+- 18 files changed, 35 insertions(+), 35 deletions(-)
++ 16 files changed, 34 insertions(+), 34 deletions(-)
+ 
+ diff --git a/src/basic/cgroup-util.c b/src/basic/cgroup-util.c
+-index bb960f183c..cb804c5f4b 100644
++index c9efd862a2..b3708ea925 100644
+ --- a/src/basic/cgroup-util.c
+ +++ b/src/basic/cgroup-util.c
+-@@ -759,7 +759,7 @@ int cg_install_release_agent(const char *controller, const char *agent) {
++@@ -766,7 +766,7 @@ int cg_install_release_agent(const char *controller, const char *agent) {
+  
+          sc = strstrip(contents);
+          if (isempty(sc)) {
+@@ -52,7 +51,7 @@ index bb960f183c..cb804c5f4b 100644
+                  if (r < 0)
+                          return r;
+          } else if (!path_equal(sc, agent))
+-@@ -777,7 +777,7 @@ int cg_install_release_agent(const char *controller, const char *agent) {
++@@ -784,7 +784,7 @@ int cg_install_release_agent(const char *controller, const char *agent) {
+  
+          sc = strstrip(contents);
+          if (streq(sc, "0")) {
+@@ -61,7 +60,7 @@ index bb960f183c..cb804c5f4b 100644
+                  if (r < 0)
+                          return r;
+  
+-@@ -804,7 +804,7 @@ int cg_uninstall_release_agent(const char *controller) {
++@@ -811,7 +811,7 @@ int cg_uninstall_release_agent(const char *controller) {
+          if (r < 0)
+                  return r;
+  
+@@ -70,7 +69,7 @@ index bb960f183c..cb804c5f4b 100644
+          if (r < 0)
+                  return r;
+  
+-@@ -814,7 +814,7 @@ int cg_uninstall_release_agent(const char *controller) {
++@@ -821,7 +821,7 @@ int cg_uninstall_release_agent(const char *controller) {
+          if (r < 0)
+                  return r;
+  
+@@ -79,7 +78,7 @@ index bb960f183c..cb804c5f4b 100644
+          if (r < 0)
+                  return r;
+  
+-@@ -1646,7 +1646,7 @@ int cg_set_attribute(const char *controller, const char *path, const char *attri
++@@ -1651,7 +1651,7 @@ int cg_set_attribute(const char *controller, const char *path, const char *attri
+          if (r < 0)
+                  return r;
+  
+@@ -89,7 +88,7 @@ index bb960f183c..cb804c5f4b 100644
+  
+  int cg_get_attribute(const char *controller, const char *path, const char *attribute, char **ret) {
+ diff --git a/src/basic/procfs-util.c b/src/basic/procfs-util.c
+-index 8f9eee8d36..480f8cc0b4 100644
++index 8c57094225..0cf6ec752b 100644
+ --- a/src/basic/procfs-util.c
+ +++ b/src/basic/procfs-util.c
+ @@ -86,13 +86,13 @@ int procfs_tasks_set_limit(uint64_t limit) {
+@@ -108,24 +107,24 @@ index 8f9eee8d36..480f8cc0b4 100644
+          if (r < 0) {
+                  uint64_t threads_max;
+  
+-diff --git a/src/basic/smack-util.c b/src/basic/smack-util.c
+-index 3362ee3924..80c0f2a52e 100644
+---- a/src/basic/smack-util.c
+-+++ b/src/basic/smack-util.c
+-@@ -114,7 +114,7 @@ int mac_smack_apply_pid(pid_t pid, const char *label) {
+-                 return 0;
++diff --git a/src/basic/sysctl-util.c b/src/basic/sysctl-util.c
++index 8913e6ff85..29e6ec0755 100644
++--- a/src/basic/sysctl-util.c
+++++ b/src/basic/sysctl-util.c
++@@ -93,7 +93,7 @@ int sysctl_write_ip_property(int af, const char *ifname, const char *property, c
+  
+-         p = procfs_file_alloca(pid, "attr/current");
+--        r = write_string_file(p, label, WRITE_STRING_FILE_DISABLE_BUFFER);
+-+        r = write_string_file(p, label, 0);
+-         if (r < 0)
+-                 return r;
++         log_debug("Setting '%s' to '%s'", p, value);
+  
++-        return write_string_file(p, value, WRITE_STRING_FILE_VERIFY_ON_FAILURE | WRITE_STRING_FILE_DISABLE_BUFFER);
+++        return write_string_file(p, value, WRITE_STRING_FILE_VERIFY_ON_FAILURE | 0);
++ }
++ 
++ int sysctl_read(const char *property, char **ret) {
+ diff --git a/src/basic/util.c b/src/basic/util.c
+-index f98ecf3858..13e0f7431f 100644
++index 955b18bd2a..6d89c90176 100644
+ --- a/src/basic/util.c
+ +++ b/src/basic/util.c
+-@@ -267,7 +267,7 @@ void disable_coredumps(void) {
++@@ -234,7 +234,7 @@ void disable_coredumps(void) {
+          if (detect_container() > 0)
+                  return;
+  
+@@ -135,7 +134,7 @@ index f98ecf3858..13e0f7431f 100644
+                  log_debug_errno(r, "Failed to turn off coredumps, ignoring: %m");
+  }
+ diff --git a/src/binfmt/binfmt.c b/src/binfmt/binfmt.c
+-index 43ed2f385b..37a6f578f7 100644
++index 29530bb691..3ecf6a45a2 100644
+ --- a/src/binfmt/binfmt.c
+ +++ b/src/binfmt/binfmt.c
+ @@ -48,7 +48,7 @@ static int delete_rule(const char *rule) {
+@@ -166,10 +165,10 @@ index 43ed2f385b..37a6f578f7 100644
+                  STRV_FOREACH(f, files) {
+                          k = apply_file(*f, true);
+ diff --git a/src/core/main.c b/src/core/main.c
+-index a280b756ff..334532cd42 100644
++index b32a19a1d8..4e1238853e 100644
+ --- a/src/core/main.c
+ +++ b/src/core/main.c
+-@@ -1382,7 +1382,7 @@ static int bump_unix_max_dgram_qlen(void) {
++@@ -1402,7 +1402,7 @@ static int bump_unix_max_dgram_qlen(void) {
+          if (v >= DEFAULT_UNIX_MAX_DGRAM_QLEN)
+                  return 0;
+  
+@@ -178,7 +177,7 @@ index a280b756ff..334532cd42 100644
+          if (r < 0)
+                  return log_full_errno(IN_SET(r, -EROFS, -EPERM, -EACCES) ? LOG_DEBUG : LOG_WARNING, r,
+                                        "Failed to bump AF_UNIX datagram queue length, ignoring: %m");
+-@@ -1666,7 +1666,7 @@ static void initialize_core_pattern(bool skip_setup) {
++@@ -1679,7 +1679,7 @@ static void initialize_core_pattern(bool skip_setup) {
+          if (getpid_cached() != 1)
+                  return;
+  
+@@ -188,10 +187,10 @@ index a280b756ff..334532cd42 100644
+                  log_warning_errno(r, "Failed to write '%s' to /proc/sys/kernel/core_pattern, ignoring: %m", arg_early_core_pattern);
+  }
+ diff --git a/src/core/smack-setup.c b/src/core/smack-setup.c
+-index 1fe592af70..603942a000 100644
++index 79c4808473..b111ce0a11 100644
+ --- a/src/core/smack-setup.c
+ +++ b/src/core/smack-setup.c
+-@@ -325,17 +325,17 @@ int mac_smack_setup(bool *loaded_policy) {
++@@ -323,17 +323,17 @@ int mac_smack_setup(bool *loaded_policy) {
+          }
+  
+  #ifdef SMACK_RUN_LABEL
+@@ -214,7 +213,7 @@ index 1fe592af70..603942a000 100644
+                  log_warning_errno(r, "Failed to set SMACK netlabel rule \"127.0.0.1 -CIPSO\": %m");
+  #endif
+ diff --git a/src/hibernate-resume/hibernate-resume.c b/src/hibernate-resume/hibernate-resume.c
+-index d8f91f4e66..a088e6e2d8 100644
++index 58e35e403e..1d0beb4008 100644
+ --- a/src/hibernate-resume/hibernate-resume.c
+ +++ b/src/hibernate-resume/hibernate-resume.c
+ @@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
+@@ -227,31 +226,18 @@ index d8f91f4e66..a088e6e2d8 100644
+                  log_error_errno(r, "Failed to write '%s' to /sys/power/resume: %m", major_minor);
+                  return EXIT_FAILURE;
+ diff --git a/src/libsystemd/sd-device/sd-device.c b/src/libsystemd/sd-device/sd-device.c
+-index d06f90ce1d..43d0a58750 100644
++index 388128bf33..695f535ff4 100644
+ --- a/src/libsystemd/sd-device/sd-device.c
+ +++ b/src/libsystemd/sd-device/sd-device.c
+-@@ -1976,7 +1976,7 @@ _public_ int sd_device_set_sysattr_value(sd_device *device, const char *sysattr,
++@@ -2096,7 +2096,7 @@ _public_ int sd_device_set_sysattr_value(sd_device *device, const char *sysattr,
+          if (!value)
+                  return -ENOMEM;
+  
+ -        r = write_string_file(path, value, WRITE_STRING_FILE_DISABLE_BUFFER | WRITE_STRING_FILE_NOFOLLOW);
+ +        r = write_string_file(path, value, 0 | WRITE_STRING_FILE_NOFOLLOW);
+          if (r < 0) {
+-                 if (r == -ELOOP)
+-                         return -EINVAL;
+-diff --git a/src/login/logind-dbus.c b/src/login/logind-dbus.c
+-index 7d757aa286..a5d9da5b7e 100644
+---- a/src/login/logind-dbus.c
+-+++ b/src/login/logind-dbus.c
+-@@ -1330,7 +1330,7 @@ static int trigger_device(Manager *m, sd_device *d) {
+-                 if (!t)
+-                         return -ENOMEM;
+- 
+--                (void) write_string_file(t, "change", WRITE_STRING_FILE_DISABLE_BUFFER);
+-+                (void) write_string_file(t, "change", 0);
+-         }
+- 
+-         return 0;
++                 /* On failure, clear cache entry, as we do not know how it fails. */
++                 device_remove_cached_sysattr_value(device, sysattr);
+ diff --git a/src/nspawn/nspawn-cgroup.c b/src/nspawn/nspawn-cgroup.c
+ index cb01b25bc6..e92051268b 100644
+ --- a/src/nspawn/nspawn-cgroup.c
+@@ -266,10 +252,10 @@ index cb01b25bc6..e92051268b 100644
+                  log_error_errno(r, "Failed to move process: %m");
+                  goto finish;
+ diff --git a/src/nspawn/nspawn.c b/src/nspawn/nspawn.c
+-index 3528b7ff14..11b0c20f95 100644
++index 90b12bb5bd..6a1dafa094 100644
+ --- a/src/nspawn/nspawn.c
+ +++ b/src/nspawn/nspawn.c
+-@@ -2667,7 +2667,7 @@ static int reset_audit_loginuid(void) {
++@@ -2751,7 +2751,7 @@ static int reset_audit_loginuid(void) {
+          if (streq(p, "4294967295"))
+                  return 0;
+  
+@@ -278,19 +264,21 @@ index 3528b7ff14..11b0c20f95 100644
+          if (r < 0) {
+                  log_error_errno(r,
+                                  "Failed to reset audit login UID. This probably means that your kernel is too\n"
+-@@ -3920,13 +3920,13 @@ static int setup_uid_map(pid_t pid) {
++@@ -4148,7 +4148,7 @@ static int setup_uid_map(
++                 return log_oom();
+  
+          xsprintf(uid_map, "/proc/" PID_FMT "/uid_map", pid);
+-         xsprintf(line, UID_FMT " " UID_FMT " " UID_FMT "\n", 0, arg_uid_shift, arg_uid_range);
+--        r = write_string_file(uid_map, line, WRITE_STRING_FILE_DISABLE_BUFFER);
+-+        r = write_string_file(uid_map, line, 0);
++-        r = write_string_file(uid_map, s, WRITE_STRING_FILE_DISABLE_BUFFER);
+++        r = write_string_file(uid_map, s, 0);
+          if (r < 0)
+                  return log_error_errno(r, "Failed to write UID map: %m");
+  
+-         /* We always assign the same UID and GID ranges */
++@@ -4158,7 +4158,7 @@ static int setup_uid_map(
++                 return log_oom();
++ 
+          xsprintf(uid_map, "/proc/" PID_FMT "/gid_map", pid);
+--        r = write_string_file(uid_map, line, WRITE_STRING_FILE_DISABLE_BUFFER);
+-+        r = write_string_file(uid_map, line, 0);
++-        r = write_string_file(uid_map, s, WRITE_STRING_FILE_DISABLE_BUFFER);
+++        r = write_string_file(uid_map, s, 0);
+          if (r < 0)
+                  return log_error_errno(r, "Failed to write GID map: %m");
+  
+@@ -316,24 +304,44 @@ index f197f715c7..077f893177 100644
+                          if (r < 0) {
+                                  log_debug_errno(r, "Failed to %s controller %s for %s (%s): %m",
+                                                  FLAGS_SET(mask, bit) ? "enable" : "disable", n, p, fs);
+-diff --git a/src/shared/sysctl-util.c b/src/shared/sysctl-util.c
+-index 670c33108b..7c7c3dcfb6 100644
+---- a/src/shared/sysctl-util.c
+-+++ b/src/shared/sysctl-util.c
+-@@ -93,7 +93,7 @@ int sysctl_write_ip_property(int af, const char *ifname, const char *property, c
++diff --git a/src/shared/mount-util.c b/src/shared/mount-util.c
++index 594efea989..d243b45bc4 100644
++--- a/src/shared/mount-util.c
+++++ b/src/shared/mount-util.c
++@@ -1019,13 +1019,13 @@ static int make_userns(uid_t uid_shift, uid_t uid_range) {
++         xsprintf(line, UID_FMT " " UID_FMT " " UID_FMT "\n", 0, uid_shift, uid_range);
+  
+-         log_debug("Setting '%s' to '%s'", p, value);
++         xsprintf(uid_map, "/proc/" PID_FMT "/uid_map", pid);
++-        r = write_string_file(uid_map, line, WRITE_STRING_FILE_DISABLE_BUFFER);
+++        r = write_string_file(uid_map, line, 0);
++         if (r < 0)
++                 return log_error_errno(r, "Failed to write UID map: %m");
+  
+--        return write_string_file(p, value, WRITE_STRING_FILE_VERIFY_ON_FAILURE | WRITE_STRING_FILE_DISABLE_BUFFER);
+-+        return write_string_file(p, value, WRITE_STRING_FILE_VERIFY_ON_FAILURE | 0);
+- }
++         /* We always assign the same UID and GID ranges */
++         xsprintf(uid_map, "/proc/" PID_FMT "/gid_map", pid);
++-        r = write_string_file(uid_map, line, WRITE_STRING_FILE_DISABLE_BUFFER);
+++        r = write_string_file(uid_map, line, 0);
++         if (r < 0)
++                 return log_error_errno(r, "Failed to write GID map: %m");
++ 
++diff --git a/src/shared/smack-util.c b/src/shared/smack-util.c
++index 3362ee3924..80c0f2a52e 100644
++--- a/src/shared/smack-util.c
+++++ b/src/shared/smack-util.c
++@@ -114,7 +114,7 @@ int mac_smack_apply_pid(pid_t pid, const char *label) {
++                 return 0;
++ 
++         p = procfs_file_alloca(pid, "attr/current");
++-        r = write_string_file(p, label, WRITE_STRING_FILE_DISABLE_BUFFER);
+++        r = write_string_file(p, label, 0);
++         if (r < 0)
++                 return r;
+  
+- int sysctl_read(const char *property, char **content) {
+ diff --git a/src/sleep/sleep.c b/src/sleep/sleep.c
+-index 39ab554290..d0e566645d 100644
++index a3aeb24633..d3e68e1b94 100644
+ --- a/src/sleep/sleep.c
+ +++ b/src/sleep/sleep.c
+-@@ -48,7 +48,7 @@ static int write_hibernate_location_info(const HibernateLocation *hibernate_loca
++@@ -46,7 +46,7 @@ static int write_hibernate_location_info(const HibernateLocation *hibernate_loca
+          assert(hibernate_location->swap);
+  
+          xsprintf(resume_str, "%u:%u", major(hibernate_location->devno), minor(hibernate_location->devno));
+@@ -342,7 +350,7 @@ index 39ab554290..d0e566645d 100644
+          if (r < 0)
+                  return log_debug_errno(r, "Failed to write partition device to /sys/power/resume for '%s': '%s': %m",
+                                         hibernate_location->swap->device, resume_str);
+-@@ -75,7 +75,7 @@ static int write_hibernate_location_info(const HibernateLocation *hibernate_loca
++@@ -73,7 +73,7 @@ static int write_hibernate_location_info(const HibernateLocation *hibernate_loca
+          }
+  
+          xsprintf(offset_str, "%" PRIu64, hibernate_location->offset);
+@@ -351,7 +359,7 @@ index 39ab554290..d0e566645d 100644
+          if (r < 0)
+                  return log_debug_errno(r, "Failed to write swap file offset to /sys/power/resume_offset for '%s': '%s': %m",
+                                         hibernate_location->swap->device, offset_str);
+-@@ -92,7 +92,7 @@ static int write_mode(char **modes) {
++@@ -90,7 +90,7 @@ static int write_mode(char **modes) {
+          STRV_FOREACH(mode, modes) {
+                  int k;
+  
+@@ -360,7 +368,7 @@ index 39ab554290..d0e566645d 100644
+                  if (k >= 0)
+                          return 0;
+  
+-@@ -114,7 +114,7 @@ static int write_state(FILE **f, char **states) {
++@@ -112,7 +112,7 @@ static int write_state(FILE **f, char **states) {
+          STRV_FOREACH(state, states) {
+                  int k;
+  
+@@ -369,34 +377,8 @@ index 39ab554290..d0e566645d 100644
+                  if (k >= 0)
+                          return 0;
+                  log_debug_errno(k, "Failed to write '%s' to /sys/power/state: %m", *state);
+-diff --git a/src/udev/udevadm-trigger.c b/src/udev/udevadm-trigger.c
+-index 5c74184c33..65f528314e 100644
+---- a/src/udev/udevadm-trigger.c
+-+++ b/src/udev/udevadm-trigger.c
+-@@ -43,7 +43,7 @@ static int exec_list(sd_device_enumerator *e, const char *action, Set **settle_s
+-                 if (!filename)
+-                         return log_oom();
+- 
+--                r = write_string_file(filename, action, WRITE_STRING_FILE_DISABLE_BUFFER);
+-+                r = write_string_file(filename, action, 0);
+-                 if (r < 0) {
+-                         bool ignore = IN_SET(r, -ENOENT, -ENODEV);
+- 
+-diff --git a/src/udev/udevd.c b/src/udev/udevd.c
+-index d24b8d4398..d123a43904 100644
+---- a/src/udev/udevd.c
+-+++ b/src/udev/udevd.c
+-@@ -1192,7 +1192,7 @@ static int synthesize_change_one(sd_device *dev, const char *syspath) {
+- 
+-         filename = strjoina(syspath, "/uevent");
+-         log_device_debug(dev, "device is closed, synthesising 'change' on %s", syspath);
+--        r = write_string_file(filename, "change", WRITE_STRING_FILE_DISABLE_BUFFER);
+-+        r = write_string_file(filename, "change", 0);
+-         if (r < 0)
+-                 return log_device_debug_errno(dev, r, "Failed to write 'change' to %s: %m", filename);
+-         return 0;
+ diff --git a/src/vconsole/vconsole-setup.c b/src/vconsole/vconsole-setup.c
+-index b28e2853e1..115b7233a0 100644
++index d1c3febdd5..1cc68694d1 100644
+ --- a/src/vconsole/vconsole-setup.c
+ +++ b/src/vconsole/vconsole-setup.c
+ @@ -116,7 +116,7 @@ static int toggle_utf8_vc(const char *name, int fd, bool utf8) {
+@@ -408,6 +390,3 @@ index b28e2853e1..115b7233a0 100644
+          if (r < 0)
+                  return log_warning_errno(r, "Failed to %s sysfs UTF-8 flag: %m", enable_disable(utf8));
+  
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0025-Handle-__cpu_mask-usage.patch b/meta/recipes-core/systemd/systemd/0025-Handle-__cpu_mask-usage.patch
+index 1cc3985d12..06702765ee 100644
+--- a/meta/recipes-core/systemd/systemd/0025-Handle-__cpu_mask-usage.patch
++++ b/meta/recipes-core/systemd/systemd/0025-Handle-__cpu_mask-usage.patch
+@@ -1,7 +1,7 @@
+-From bbda4a48a34662393117fc677c3a678d4ce4c2ec Mon Sep 17 00:00:00 2001
++From b04518c464b526f8b9adc9ce3c08b1881db47989 Mon Sep 17 00:00:00 2001
+ From: Scott Murray <scott.murray@konsulko.com>
+ Date: Fri, 13 Sep 2019 19:26:27 -0400
+-Subject: [PATCH 25/26] Handle __cpu_mask usage
++Subject: [PATCH] Handle __cpu_mask usage
+ 
+ Fixes errors:
+ 
+@@ -18,6 +18,7 @@ add a typedef to cpu-set-util.h defining __cpu_mask appropriately.
+ Upstream-Status: Inappropriate [musl specific]
+ 
+ Signed-off-by: Scott Murray <scott.murray@konsulko.com>
++
+ ---
+  src/shared/cpu-set-util.h | 2 ++
+  src/test/test-sizeof.c    | 2 +-
+@@ -55,6 +56,3 @@ index e1a59d408c..c269ea6e8c 100644
+  
+  /* Print information about various types. Useful when diagnosing
+   * gcc diagnostics on an unfamiliar architecture. */
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0026-Handle-missing-gshadow.patch b/meta/recipes-core/systemd/systemd/0026-Handle-missing-gshadow.patch
+index 4180afb08e..dc63305825 100644
+--- a/meta/recipes-core/systemd/systemd/0026-Handle-missing-gshadow.patch
++++ b/meta/recipes-core/systemd/systemd/0026-Handle-missing-gshadow.patch
+@@ -1,7 +1,7 @@
+-From 47bf88f74717b417e4adbcc04256334b2335c873 Mon Sep 17 00:00:00 2001
++From 0c8935128b39864b07dfee39cfa9d35d48f056aa Mon Sep 17 00:00:00 2001
+ From: Alex Kiernan <alex.kiernan@gmail.com>
+ Date: Tue, 10 Mar 2020 11:05:20 +0000
+-Subject: [PATCH 26/26] Handle missing gshadow
++Subject: [PATCH] Handle missing gshadow
+ 
+ gshadow usage is now present in the userdb code. Mask all uses of it to
+ allow compilation on musl
+@@ -10,11 +10,12 @@ Upstream-Status: Inappropriate [musl specific]
+ Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+ [Rebased for v247]
+ Signed-off-by: Luca Boccassi <luca.boccassi@microsoft.com>
++
+ ---
+  src/shared/user-record-nss.c | 20 ++++++++++++++++++++
+  src/shared/user-record-nss.h |  4 ++++
+- src/shared/userdb.c          |  6 ++++++
+- 3 files changed, 30 insertions(+)
++ src/shared/userdb.c          |  7 ++++++-
++ 3 files changed, 30 insertions(+), 1 deletion(-)
+ 
+ diff --git a/src/shared/user-record-nss.c b/src/shared/user-record-nss.c
+ index 88b8fc2f8f..a819d41bac 100644
+@@ -138,27 +139,27 @@ index 22ab04d6ee..4e52e7a911 100644
+  #include <shadow.h>
+  
+ diff --git a/src/shared/userdb.c b/src/shared/userdb.c
+-index 2d480283d1..0d19764f2e 100644
++index 91ac7c3832..20881ece84 100644
+ --- a/src/shared/userdb.c
+ +++ b/src/shared/userdb.c
+-@@ -929,13 +929,16 @@ int groupdb_iterator_get(UserDBIterator *iterator, GroupRecord **ret) {
++@@ -1047,13 +1047,15 @@ int groupdb_iterator_get(UserDBIterator *iterator, GroupRecord **ret) {
+                  if (gr) {
+                          _cleanup_free_ char *buffer = NULL;
+                          bool incomplete = false;
+ +#if ENABLE_GSHADOW
+                          struct sgrp sgrp;
++-
+ +#endif
+- 
+                          if (streq_ptr(gr->gr_name, "root"))
+                                  iterator->synthesize_root = false;
+                          if (gr->gr_gid == GID_NOBODY)
+                                  iterator->synthesize_nobody = false;
+  
+ +#if ENABLE_GSHADOW
+-                         r = nss_sgrp_for_group(gr, &sgrp, &buffer);
+-                         if (r < 0) {
+-                                 log_debug_errno(r, "Failed to acquire shadow entry for group %s, ignoring: %m", gr->gr_name);
+-@@ -943,6 +946,9 @@ int groupdb_iterator_get(UserDBIterator *iterator, GroupRecord **ret) {
++                         if (!FLAGS_SET(iterator->flags, USERDB_SUPPRESS_SHADOW)) {
++                                 r = nss_sgrp_for_group(gr, &sgrp, &buffer);
++                                 if (r < 0) {
++@@ -1066,6 +1068,9 @@ int groupdb_iterator_get(UserDBIterator *iterator, GroupRecord **ret) {
+                          }
+  
+                          r = nss_group_to_group_record(gr, r >= 0 ? &sgrp : NULL, ret);
+@@ -168,6 +169,3 @@ index 2d480283d1..0d19764f2e 100644
+                          if (r < 0)
+                                  return r;
+  
+--- 
+-2.27.0
+-
+diff --git a/meta/recipes-core/systemd/systemd/0027-proc-dont-trigger-mount-error-with-invalid-options-o.patch b/meta/recipes-core/systemd/systemd/0027-proc-dont-trigger-mount-error-with-invalid-options-o.patch
+deleted file mode 100644
+index 94a4c307b5..0000000000
+--- a/meta/recipes-core/systemd/systemd/0027-proc-dont-trigger-mount-error-with-invalid-options-o.patch
++++ /dev/null
+@@ -1,97 +0,0 @@
+-From 297aba739cd689e4dc9f43bb1422ec88d481099a Mon Sep 17 00:00:00 2001
+-From: Paul Gortmaker <paul.gortmaker@windriver.com>
+-Date: Wed, 13 Jan 2021 21:09:33 +0000
+-Subject: [PATCH] proc: dont trigger mount error with invalid options on old
+- kernels
+-
+-As of commit 4e39995371738b04d98d27b0d34ea8fe09ec9fab ("core: introduce
+-ProtectProc= and ProcSubset= to expose hidepid= and subset= procfs
+-mount options") kernels older than v5.8 generate multple warnings at
+-boot, as seen in this Yocto build from today:
+-
+-     qemux86-64 login: root
+-     [   65.829009] proc: Bad value for 'hidepid'
+-     root@qemux86-64:~# dmesg|grep proc:
+-     [   16.990706] proc: Bad value for 'hidepid'
+-     [   28.060178] proc: Bad value for 'hidepid'
+-     [   28.874229] proc: Bad value for 'hidepid'
+-     [   32.685107] proc: Bad value for 'hidepid'
+-     [   65.829009] proc: Bad value for 'hidepid'
+-     root@qemux86-64:~#
+-
+-The systemd maintainer has dismissed this as something people should
+-simply ignore[1] and has no interest in trying to avoid it by
+-proactively checking the kernel version, so people can safely assume
+-that they will never see this version check commit upstream.
+-
+-However, as can be seen above, telling people to just ignore it is not
+-an option, as we'll end up answering the same question and dealing with
+-the same bug over and over again.
+-
+-The commit that triggers this is systemd v247-rc1~378^2~3 -- so any
+-systemd 247 and above plus kernel v5.7 or older will need this.
+-
+-[1] https://github.com/systemd/systemd/issues/16896
+-
+-Upstream-Status: Denied [https://github.com/systemd/systemd/issues/16896]
+-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+-
+-Index: git/src/core/namespace.c
+-===================================================================
+---- git.orig/src/core/namespace.c
+-+++ git/src/core/namespace.c
+-@@ -4,7 +4,9 @@
+- #include <linux/loop.h>
+- #include <sched.h>
+- #include <stdio.h>
+-+#include <stdlib.h>
+- #include <sys/mount.h>
+-+#include <sys/utsname.h>
+- #include <unistd.h>
+- #include <linux/fs.h>
+- 
+-@@ -860,13 +862,32 @@ static int mount_sysfs(const MountEntry
+- 
+- static int mount_procfs(const MountEntry *m, const NamespaceInfo *ns_info) {
+-         const char *entry_path;
+--        int r;
+-+        int r, major, minor;
+-+        struct utsname uts;
+-+        bool old = false;
+- 
+-         assert(m);
+-         assert(ns_info);
+- 
+-         entry_path = mount_entry_path(m);
+- 
+-+        /* If uname says that the system is older than v5.8, then the textual hidepid= stuff is not
+-+         * supported by the kernel, and thus the per-instance hidepid= neither, which means we
+-+         * really don't want to use it, since it would affect our host's /proc * mount. Hence let's
+-+         * gracefully fallback to a classic, unrestricted version. */
+-+
+-+        r = uname(&uts);
+-+        if (r < 0)
+-+               return errno;
+-+
+-+        major = atoi(uts.release);
+-+        minor = atoi(strchr(uts.release, '.') + 1);
+-+
+-+        if (major < 5 || (major == 5 && minor < 8)) {
+-+                log_debug("Pre v5.8 kernel detected [v%d.%d] - skipping hidepid=", major, minor);
+-+                old = true;
+-+        }
+-+
+-         /* Mount a new instance, so that we get the one that matches our user namespace, if we are running in
+-          * one. i.e we don't reuse existing mounts here under any condition, we want a new instance owned by
+-          * our user namespace and with our hidepid= settings applied. Hence, let's get rid of everything
+-@@ -875,8 +896,8 @@ static int mount_procfs(const MountEntry
+-         (void) mkdir_p_label(entry_path, 0755);
+-         (void) umount_recursive(entry_path, 0);
+- 
+--        if (ns_info->protect_proc != PROTECT_PROC_DEFAULT ||
+--            ns_info->proc_subset != PROC_SUBSET_ALL) {
+-+        if (!old && (ns_info->protect_proc != PROTECT_PROC_DEFAULT ||
+-+            ns_info->proc_subset != PROC_SUBSET_ALL)) {
+-                 _cleanup_free_ char *opts = NULL;
+- 
+-                 /* Starting with kernel 5.8 procfs' hidepid= logic is truly per-instance (previously it
+diff --git a/meta/recipes-core/systemd/systemd/0028-missing_syscall.h-Define-MIPS-ABI-defines-for-musl.patch b/meta/recipes-core/systemd/systemd/0028-missing_syscall.h-Define-MIPS-ABI-defines-for-musl.patch
+index bbee6e6b28..ff96a720c5 100644
+--- a/meta/recipes-core/systemd/systemd/0028-missing_syscall.h-Define-MIPS-ABI-defines-for-musl.patch
++++ b/meta/recipes-core/systemd/systemd/0028-missing_syscall.h-Define-MIPS-ABI-defines-for-musl.patch
+@@ -1,4 +1,4 @@
+-From 7b32582c066549fea0f7180a6c575e7fa37a867f Mon Sep 17 00:00:00 2001
++From f5d7fee9620cbcf52be8f8ba477890d28cadfbc8 Mon Sep 17 00:00:00 2001
+ From: Khem Raj <raj.khem@gmail.com>
+ Date: Mon, 12 Apr 2021 23:44:53 -0700
+ Subject: [PATCH] missing_syscall.h: Define MIPS ABI defines for musl
+@@ -10,15 +10,16 @@ them here in case they are undefined
+ Upstream-Status: Pending
+ 
+ Signed-off-by: Khem Raj <raj.khem@gmail.com>
++
+ ---
+  src/basic/missing_syscall.h | 6 ++++++
+  1 file changed, 6 insertions(+)
+ 
+ diff --git a/src/basic/missing_syscall.h b/src/basic/missing_syscall.h
+-index 0594a1b930..495d161334 100644
++index 9e3a165857..4d59b3e7b0 100644
+ --- a/src/basic/missing_syscall.h
+ +++ b/src/basic/missing_syscall.h
+-@@ -15,6 +15,12 @@
++@@ -20,6 +20,12 @@
+  #include <asm/sgidefs.h>
+  #endif
+  
+@@ -28,9 +29,6 @@ index 0594a1b930..495d161334 100644
+ +#define _MIPS_SIM_ABI64		3
+ +#endif
+ +
+- #if defined(__x86_64__) && defined(__ILP32__)
+- #  define systemd_SC_arch_bias(x) ((x) | /* __X32_SYSCALL_BIT */ 0x40000000)
+- #elif defined(__ia64__)
+--- 
+-2.31.1
+-
++ #include "missing_keyctl.h"
++ #include "missing_stat.h"
++ #include "missing_syscall_def.h"
+diff --git a/meta/recipes-core/systemd/systemd_247.6.bb b/meta/recipes-core/systemd/systemd_249.3.bb
+similarity index 89%
+rename from meta/recipes-core/systemd/systemd_247.6.bb
+rename to meta/recipes-core/systemd/systemd_249.3.bb
+index f1db1e922b..a6759c7a35 100644
+--- a/meta/recipes-core/systemd/systemd_247.6.bb
++++ b/meta/recipes-core/systemd/systemd_249.3.bb
+@@ -4,7 +4,7 @@ PROVIDES = "udev"
+ 
+ PE = "1"
+ 
+-DEPENDS = "intltool-native gperf-native libcap util-linux"
++DEPENDS = "intltool-native gperf-native libcap util-linux python3-jinja2-native"
+ 
+ SECTION = "base/shell"
+ 
+@@ -24,17 +24,11 @@ SRC_URI += "file://touchscreen.rules \
+            file://0001-binfmt-Don-t-install-dependency-links-at-install-tim.patch \
+            file://0003-implment-systemd-sysv-install-for-OE.patch \
+            file://0001-systemd.pc.in-use-ROOTPREFIX-without-suffixed-slash.patch \
+-           file://0001-logind-Restore-chvt-as-non-root-user-without-polkit.patch \
+-           file://0027-proc-dont-trigger-mount-error-with-invalid-options-o.patch \
+-           file://0001-analyze-resolve-executable-path-if-it-is-relative.patch \
+-           file://0001-sd-dhcp-client-check-error-earlier-and-reduce-indent.patch \
+-           file://0002-sd-dhcp-client-shorten-code-a-bit.patch \
+-           file://0003-sd-dhcp-client-logs-when-dhcp-client-unexpectedly-ga.patch \
+-           file://0004-sd-dhcp-client-tentatively-ignore-FORCERENEW-command.patch \
++           file://0001-test-parse-argument-Include-signal.h.patch \
+            "
+ 
+ # patches needed by musl
+-SRC_URI_append_libc-musl = " ${SRC_URI_MUSL}"
++SRC_URI:append:libc-musl = " ${SRC_URI_MUSL}"
+ SRC_URI_MUSL = "\
+                file://0002-don-t-use-glibc-specific-qsort_r.patch \
+                file://0003-missing_type.h-add-__compare_fn_t-and-comparison_fn_.patch \
+@@ -69,7 +63,7 @@ PAM_PLUGINS = " \
+ "
+ 
+ PACKAGECONFIG ??= " \
+-    ${@bb.utils.filter('DISTRO_FEATURES', 'acl audit efi ldconfig pam selinux smack usrmerge polkit', d)} \
++    ${@bb.utils.filter('DISTRO_FEATURES', 'acl audit efi ldconfig pam selinux smack usrmerge polkit seccomp', d)} \
+     ${@bb.utils.contains('DISTRO_FEATURES', 'wifi', 'rfkill', '', d)} \
+     ${@bb.utils.contains('DISTRO_FEATURES', 'x11', 'xkbcommon', '', d)} \
+     backlight \
+@@ -99,10 +93,10 @@ PACKAGECONFIG ??= " \
+     userdb \
+     utmp \
+     vconsole \
+-    xz \
++    zstd \
+ "
+ 
+-PACKAGECONFIG_remove_libc-musl = " \
++PACKAGECONFIG:remove:libc-musl = " \
+     gshadow \
+     idn \
+     localed \
+@@ -115,7 +109,7 @@ PACKAGECONFIG_remove_libc-musl = " \
+     utmp \
+ "
+ 
+-CFLAGS_append_libc-musl = " -D__UAPI_DEF_ETHHDR=0 "
++CFLAGS:append:libc-musl = " -D__UAPI_DEF_ETHHDR=0 "
+ 
+ # Some of the dependencies are weak-style recommends - if not available at runtime,
+ # systemd won't fail but the library-related feature will be skipped with a warning.
+@@ -181,7 +175,6 @@ PACKAGECONFIG[quotacheck] = "-Dquotacheck=true,-Dquotacheck=false"
+ PACKAGECONFIG[randomseed] = "-Drandomseed=true,-Drandomseed=false"
+ PACKAGECONFIG[resolved] = "-Dresolve=true,-Dresolve=false"
+ PACKAGECONFIG[rfkill] = "-Drfkill=true,-Drfkill=false"
+-# libseccomp is found in meta-security
+ PACKAGECONFIG[seccomp] = "-Dseccomp=true,-Dseccomp=false,libseccomp"
+ PACKAGECONFIG[selinux] = "-Dselinux=true,-Dselinux=false,libselinux,initscripts-sushell"
+ PACKAGECONFIG[smack] = "-Dsmack=true,-Dsmack=false"
+@@ -206,6 +199,7 @@ PACKAGECONFIG[xdg-autostart] = "-Dxdg-autostart=true,-Dxdg-autostart=false"
+ PACKAGECONFIG[xkbcommon] = "-Dxkbcommon=true,-Dxkbcommon=false,libxkbcommon"
+ PACKAGECONFIG[xz] = "-Dxz=true,-Dxz=false,xz"
+ PACKAGECONFIG[zlib] = "-Dzlib=true,-Dzlib=false,zlib"
++PACKAGECONFIG[zstd] = "-Dzstd=true,-Dzstd=false,zstd"
+ 
+ # Helper variables to clarify locations.  This mirrors the logic in systemd's
+ # build system.
+@@ -341,7 +335,7 @@ do_install() {
+ 	install -Dm 0644 ${WORKDIR}/systemd-pager.sh ${D}${sysconfdir}/profile.d/systemd-pager.sh
+ }
+ 
+-python populate_packages_prepend (){
++python populate_packages:prepend (){
+     systemdlibdir = d.getVar("rootlibdir")
+     do_split_packages(d, systemdlibdir, '^lib(.*)\.so\.*', 'lib%s', 'Systemd %s library', extra_depends='', allow_links=True)
+ }
+@@ -366,96 +360,96 @@ PACKAGE_BEFORE_PN = "\
+     udev-hwdb \
+ "
+ 
+-SUMMARY_${PN}-container = "Tools for containers and VMs"
+-DESCRIPTION_${PN}-container = "Systemd tools to spawn and manage containers and virtual machines."
++SUMMARY:${PN}-container = "Tools for containers and VMs"
++DESCRIPTION:${PN}-container = "Systemd tools to spawn and manage containers and virtual machines."
+ 
+-SUMMARY_${PN}-journal-gatewayd = "HTTP server for journal events"
+-DESCRIPTION_${PN}-journal-gatewayd = "systemd-journal-gatewayd serves journal events over the network. Clients must connect using HTTP. The server listens on port 19531 by default."
++SUMMARY:${PN}-journal-gatewayd = "HTTP server for journal events"
++DESCRIPTION:${PN}-journal-gatewayd = "systemd-journal-gatewayd serves journal events over the network. Clients must connect using HTTP. The server listens on port 19531 by default."
+ 
+-SUMMARY_${PN}-journal-upload = "Send journal messages over the network"
+-DESCRIPTION_${PN}-journal-upload = "systemd-journal-upload uploads journal entries to a specified URL."
++SUMMARY:${PN}-journal-upload = "Send journal messages over the network"
++DESCRIPTION:${PN}-journal-upload = "systemd-journal-upload uploads journal entries to a specified URL."
+ 
+-SUMMARY_${PN}-journal-remote = "Receive journal messages over the network"
+-DESCRIPTION_${PN}-journal-remote = "systemd-journal-remote is a command to receive serialized journal events and store them to journal files."
++SUMMARY:${PN}-journal-remote = "Receive journal messages over the network"
++DESCRIPTION:${PN}-journal-remote = "systemd-journal-remote is a command to receive serialized journal events and store them to journal files."
+ 
+ SYSTEMD_PACKAGES = "${@bb.utils.contains('PACKAGECONFIG', 'binfmt', '${PN}-binfmt', '', d)} \
+                     ${@bb.utils.contains('PACKAGECONFIG', 'microhttpd', '${PN}-journal-gatewayd', '', d)} \
+                     ${@bb.utils.contains('PACKAGECONFIG', 'microhttpd', '${PN}-journal-remote', '', d)} \
+                     ${@bb.utils.contains('PACKAGECONFIG', 'journal-upload', '${PN}-journal-upload', '', d)} \
+ "
+-SYSTEMD_SERVICE_${PN}-binfmt = "systemd-binfmt.service"
++SYSTEMD_SERVICE:${PN}-binfmt = "systemd-binfmt.service"
+ 
+ USERADD_PACKAGES = "${PN} ${PN}-extra-utils \
+                     ${@bb.utils.contains('PACKAGECONFIG', 'microhttpd', '${PN}-journal-gateway', '', d)} \
+                     ${@bb.utils.contains('PACKAGECONFIG', 'microhttpd', '${PN}-journal-remote', '', d)} \
+                     ${@bb.utils.contains('PACKAGECONFIG', 'journal-upload', '${PN}-journal-upload', '', d)} \
+ "
+-GROUPADD_PARAM_${PN} = "-r systemd-journal;"
+-GROUPADD_PARAM_${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'polkit_hostnamed_fallback', '-r systemd-hostname;', '', d)}"
+-USERADD_PARAM_${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'coredump', '--system -d / -M --shell /sbin/nologin systemd-coredump;', '', d)}"
+-USERADD_PARAM_${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'networkd', '--system -d / -M --shell /sbin/nologin systemd-network;', '', d)}"
+-USERADD_PARAM_${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'polkit', '--system --no-create-home --user-group --home-dir ${sysconfdir}/polkit-1 polkitd;', '', d)}"
+-USERADD_PARAM_${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'resolved', '--system -d / -M --shell /sbin/nologin systemd-resolve;', '', d)}"
+-USERADD_PARAM_${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'timesyncd', '--system -d / -M --shell /sbin/nologin systemd-timesync;', '', d)}"
+-USERADD_PARAM_${PN}-extra-utils = "--system -d / -M --shell /sbin/nologin systemd-bus-proxy"
+-USERADD_PARAM_${PN}-journal-gateway = "--system -d / -M --shell /sbin/nologin systemd-journal-gateway"
+-USERADD_PARAM_${PN}-journal-remote = "--system -d / -M --shell /sbin/nologin systemd-journal-remote"
+-USERADD_PARAM_${PN}-journal-upload = "--system -d / -M --shell /sbin/nologin systemd-journal-upload"
+-
+-FILES_${PN}-analyze = "${bindir}/systemd-analyze"
+-
+-FILES_${PN}-initramfs = "/init"
+-RDEPENDS_${PN}-initramfs = "${PN}"
+-
+-FILES_${PN}-gui = "${bindir}/systemadm"
+-
+-FILES_${PN}-vconsole-setup = "${rootlibexecdir}/systemd/systemd-vconsole-setup \
++GROUPADD_PARAM:${PN} = "-r systemd-journal;"
++GROUPADD_PARAM:${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'polkit_hostnamed_fallback', '-r systemd-hostname;', '', d)}"
++USERADD_PARAM:${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'coredump', '--system -d / -M --shell /sbin/nologin systemd-coredump;', '', d)}"
++USERADD_PARAM:${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'networkd', '--system -d / -M --shell /sbin/nologin systemd-network;', '', d)}"
++USERADD_PARAM:${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'polkit', '--system --no-create-home --user-group --home-dir ${sysconfdir}/polkit-1 polkitd;', '', d)}"
++USERADD_PARAM:${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'resolved', '--system -d / -M --shell /sbin/nologin systemd-resolve;', '', d)}"
++USERADD_PARAM:${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'timesyncd', '--system -d / -M --shell /sbin/nologin systemd-timesync;', '', d)}"
++USERADD_PARAM:${PN}-extra-utils = "--system -d / -M --shell /sbin/nologin systemd-bus-proxy"
++USERADD_PARAM:${PN}-journal-gateway = "--system -d / -M --shell /sbin/nologin systemd-journal-gateway"
++USERADD_PARAM:${PN}-journal-remote = "--system -d / -M --shell /sbin/nologin systemd-journal-remote"
++USERADD_PARAM:${PN}-journal-upload = "--system -d / -M --shell /sbin/nologin systemd-journal-upload"
++
++FILES:${PN}-analyze = "${bindir}/systemd-analyze"
++
++FILES:${PN}-initramfs = "/init"
++RDEPENDS:${PN}-initramfs = "${PN}"
++
++FILES:${PN}-gui = "${bindir}/systemadm"
++
++FILES:${PN}-vconsole-setup = "${rootlibexecdir}/systemd/systemd-vconsole-setup \
+                               ${systemd_unitdir}/system/systemd-vconsole-setup.service \
+                               ${systemd_unitdir}/system/sysinit.target.wants/systemd-vconsole-setup.service"
+ 
+-RDEPENDS_${PN}-kernel-install += "bash"
+-FILES_${PN}-kernel-install = "${bindir}/kernel-install \
++RDEPENDS:${PN}-kernel-install += "bash"
++FILES:${PN}-kernel-install = "${bindir}/kernel-install \
+                               ${sysconfdir}/kernel/ \
+                               ${exec_prefix}/lib/kernel \
+                              "
+-FILES_${PN}-rpm-macros = "${exec_prefix}/lib/rpm \
++FILES:${PN}-rpm-macros = "${exec_prefix}/lib/rpm \
+                          "
+ 
+-FILES_${PN}-zsh-completion = "${datadir}/zsh/site-functions"
++FILES:${PN}-zsh-completion = "${datadir}/zsh/site-functions"
+ 
+-FILES_${PN}-binfmt = "${sysconfdir}/binfmt.d/ \
++FILES:${PN}-binfmt = "${sysconfdir}/binfmt.d/ \
+                       ${exec_prefix}/lib/binfmt.d \
+                       ${rootlibexecdir}/systemd/systemd-binfmt \
+                       ${systemd_unitdir}/system/proc-sys-fs-binfmt_misc.* \
+                       ${systemd_unitdir}/system/systemd-binfmt.service"
+-RRECOMMENDS_${PN}-binfmt = "kernel-module-binfmt-misc"
++RRECOMMENDS:${PN}-binfmt = "kernel-module-binfmt-misc"
+ 
+-RRECOMMENDS_${PN}-vconsole-setup = "kbd kbd-consolefonts kbd-keymaps"
++RRECOMMENDS:${PN}-vconsole-setup = "kbd kbd-consolefonts kbd-keymaps"
+ 
+ 
+-FILES_${PN}-journal-gatewayd = "${rootlibexecdir}/systemd/systemd-journal-gatewayd \
++FILES:${PN}-journal-gatewayd = "${rootlibexecdir}/systemd/systemd-journal-gatewayd \
+                                 ${systemd_system_unitdir}/systemd-journal-gatewayd.service \
+                                 ${systemd_system_unitdir}/systemd-journal-gatewayd.socket \
+                                 ${systemd_system_unitdir}/sockets.target.wants/systemd-journal-gatewayd.socket \
+                                 ${datadir}/systemd/gatewayd/browse.html \
+                                "
+-SYSTEMD_SERVICE_${PN}-journal-gatewayd = "systemd-journal-gatewayd.socket"
++SYSTEMD_SERVICE:${PN}-journal-gatewayd = "systemd-journal-gatewayd.socket"
+ 
+-FILES_${PN}-journal-upload = "${rootlibexecdir}/systemd/systemd-journal-upload \
++FILES:${PN}-journal-upload = "${rootlibexecdir}/systemd/systemd-journal-upload \
+                               ${systemd_system_unitdir}/systemd-journal-upload.service \
+                               ${sysconfdir}/systemd/journal-upload.conf \
+                              "
+-SYSTEMD_SERVICE_${PN}-journal-upload = "systemd-journal-upload.service"
++SYSTEMD_SERVICE:${PN}-journal-upload = "systemd-journal-upload.service"
+ 
+-FILES_${PN}-journal-remote = "${rootlibexecdir}/systemd/systemd-journal-remote \
++FILES:${PN}-journal-remote = "${rootlibexecdir}/systemd/systemd-journal-remote \
+                               ${sysconfdir}/systemd/journal-remote.conf \
+                               ${systemd_system_unitdir}/systemd-journal-remote.service \
+                               ${systemd_system_unitdir}/systemd-journal-remote.socket \
+                              "
+-SYSTEMD_SERVICE_${PN}-journal-remote = "systemd-journal-remote.socket"
++SYSTEMD_SERVICE:${PN}-journal-remote = "systemd-journal-remote.socket"
+ 
+ 
+-FILES_${PN}-container = "${sysconfdir}/dbus-1/system.d/org.freedesktop.import1.conf \
++FILES:${PN}-container = "${sysconfdir}/dbus-1/system.d/org.freedesktop.import1.conf \
+                          ${sysconfdir}/dbus-1/system.d/org.freedesktop.machine1.conf \
+                          ${sysconfdir}/systemd/system/multi-user.target.wants/machines.target \
+                          ${base_bindir}/machinectl \
+@@ -479,6 +473,7 @@ FILES_${PN}-container = "${sysconfdir}/dbus-1/system.d/org.freedesktop.import1.c
+                          ${rootlibexecdir}/systemd/systemd-machined \
+                          ${rootlibexecdir}/systemd/systemd-pull \
+                          ${exec_prefix}/lib/tmpfiles.d/systemd-nspawn.conf \
++                         ${exec_prefix}/lib/tmpfiles.d/README \
+                          ${systemd_system_unitdir}/systemd-nspawn@.service \
+                          ${libdir}/libnss_mymachines.so.2 \
+                          ${datadir}/dbus-1/system-services/org.freedesktop.import1.service \
+@@ -490,7 +485,7 @@ FILES_${PN}-container = "${sysconfdir}/dbus-1/system.d/org.freedesktop.import1.c
+                         "
+ 
+ # "machinectl import-tar" uses "tar --numeric-owner", not supported by busybox.
+-RRECOMMENDS_${PN}-container += "\
++RRECOMMENDS:${PN}-container += "\
+                          ${PN}-journal-gatewayd \
+                          ${PN}-journal-remote \
+                          ${PN}-journal-upload \
+@@ -500,7 +495,7 @@ RRECOMMENDS_${PN}-container += "\
+                          tar \
+                         "
+ 
+-FILES_${PN}-extra-utils = "\
++FILES:${PN}-extra-utils = "\
+                         ${base_bindir}/systemd-escape \
+                         ${base_bindir}/systemd-inhibit \
+                         ${bindir}/systemd-detect-virt \
+@@ -512,6 +507,7 @@ FILES_${PN}-extra-utils = "\
+                         ${bindir}/systemd-cgls \
+                         ${bindir}/systemd-cgtop \
+                         ${bindir}/systemd-stdio-bridge \
++                        ${bindir}/systemd-sysext \
+                         ${base_bindir}/systemd-ask-password \
+                         ${base_bindir}/systemd-tty-ask-password-agent \
+                         ${systemd_unitdir}/system/systemd-ask-password-console.path \
+@@ -543,14 +539,14 @@ FILES_${PN}-extra-utils = "\
+                         ${rootlibexecdir}/systemd/systemd-cgroups-agent \
+ "
+ 
+-FILES_${PN}-udev-rules = "\
++FILES:${PN}-udev-rules = "\
+                         ${rootlibexecdir}/udev/rules.d/70-uaccess.rules \
+                         ${rootlibexecdir}/udev/rules.d/71-seat.rules \
+                         ${rootlibexecdir}/udev/rules.d/73-seat-late.rules \
+                         ${rootlibexecdir}/udev/rules.d/99-systemd.rules \
+ "
+ 
+-CONFFILES_${PN} = "${sysconfdir}/systemd/coredump.conf \
++CONFFILES:${PN} = "${sysconfdir}/systemd/coredump.conf \
+ 	${sysconfdir}/systemd/journald.conf \
+ 	${sysconfdir}/systemd/logind.conf \
+ 	${sysconfdir}/systemd/networkd.conf \
+@@ -562,7 +558,7 @@ CONFFILES_${PN} = "${sysconfdir}/systemd/coredump.conf \
+ 	${sysconfdir}/systemd/user.conf \
+ "
+ 
+-FILES_${PN} = " ${base_bindir}/* \
++FILES:${PN} = " ${base_bindir}/* \
+                 ${base_sbindir}/shutdown \
+                 ${base_sbindir}/halt \
+                 ${base_sbindir}/poweroff \
+@@ -610,6 +606,7 @@ FILES_${PN} = " ${base_bindir}/* \
+                 ${exec_prefix}/lib/environment.d \
+                 ${localstatedir} \
+                 ${rootlibexecdir}/modprobe.d/systemd.conf \
++                ${rootlibexecdir}/modprobe.d/README \
+                 ${datadir}/dbus-1/system.d/org.freedesktop.timedate1.conf \
+                 ${datadir}/dbus-1/system.d/org.freedesktop.locale1.conf \
+                 ${datadir}/dbus-1/system.d/org.freedesktop.network1.conf \
+@@ -623,13 +620,13 @@ FILES_${PN} = " ${base_bindir}/* \
+                 ${datadir}/dbus-1/system.d/org.freedesktop.oom1.conf \
+                "
+ 
+-FILES_${PN}-dev += "${base_libdir}/security/*.la ${datadir}/dbus-1/interfaces/ ${sysconfdir}/rpm/macros.systemd"
++FILES:${PN}-dev += "${base_libdir}/security/*.la ${datadir}/dbus-1/interfaces/ ${sysconfdir}/rpm/macros.systemd"
+ 
+-RDEPENDS_${PN} += "kmod dbus util-linux-mount util-linux-umount udev (= ${EXTENDPKGV}) systemd-udev-rules util-linux-agetty util-linux-fsck"
+-RDEPENDS_${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'serial-getty-generator', '', 'systemd-serialgetty', d)}"
+-RDEPENDS_${PN} += "volatile-binds"
++RDEPENDS:${PN} += "kmod dbus util-linux-mount util-linux-umount udev (= ${EXTENDPKGV}) systemd-udev-rules util-linux-agetty util-linux-fsck"
++RDEPENDS:${PN} += "${@bb.utils.contains('PACKAGECONFIG', 'serial-getty-generator', '', 'systemd-serialgetty', d)}"
++RDEPENDS:${PN} += "volatile-binds"
+ 
+-RRECOMMENDS_${PN} += "systemd-extra-utils \
++RRECOMMENDS:${PN} += "systemd-extra-utils \
+                       udev-hwdb \
+                       e2fsprogs-e2fsck \
+                       kernel-module-autofs4 kernel-module-unix kernel-module-ipv6 kernel-module-sch-fq-codel \
+@@ -637,21 +634,22 @@ RRECOMMENDS_${PN} += "systemd-extra-utils \
+                       systemd-conf \
+ "
+ 
+-INSANE_SKIP_${PN} += "dev-so libdir"
+-INSANE_SKIP_${PN}-dbg += "libdir"
+-INSANE_SKIP_${PN}-doc += " libdir"
++INSANE_SKIP:${PN} += "dev-so libdir"
++INSANE_SKIP:${PN}-dbg += "libdir"
++INSANE_SKIP:${PN}-doc += " libdir"
+ 
+-RPROVIDES_udev = "hotplug"
++RPROVIDES:udev = "hotplug"
+ 
+-RDEPENDS_udev-hwdb += "udev"
++RDEPENDS:udev-hwdb += "udev"
+ 
+-FILES_udev += "${base_sbindir}/udevd \
++FILES:udev += "${base_sbindir}/udevd \
+                ${rootlibexecdir}/systemd/network/99-default.link \
+                ${rootlibexecdir}/systemd/systemd-udevd \
+                ${rootlibexecdir}/udev/accelerometer \
+                ${rootlibexecdir}/udev/ata_id \
+                ${rootlibexecdir}/udev/cdrom_id \
+                ${rootlibexecdir}/udev/collect \
++               ${rootlibexecdir}/udev/dmi_memory_id \
+                ${rootlibexecdir}/udev/fido_id \
+                ${rootlibexecdir}/udev/findkeyboards \
+                ${rootlibexecdir}/udev/keyboard-force-release.sh \
+@@ -679,6 +677,7 @@ FILES_udev += "${base_sbindir}/udevd \
+                ${rootlibexecdir}/udev/rules.d/61-autosuspend-manual.rules \
+                ${rootlibexecdir}/udev/rules.d/64-btrfs.rules \
+                ${rootlibexecdir}/udev/rules.d/70-joystick.rules \
++               ${rootlibexecdir}/udev/rules.d/70-memory.rules \
+                ${rootlibexecdir}/udev/rules.d/70-mouse.rules \
+                ${rootlibexecdir}/udev/rules.d/70-power-switch.rules \
+                ${rootlibexecdir}/udev/rules.d/70-touchpad.rules \
+@@ -687,7 +686,9 @@ FILES_udev += "${base_sbindir}/udevd \
+                ${rootlibexecdir}/udev/rules.d/78-sound-card.rules \
+                ${rootlibexecdir}/udev/rules.d/80-drivers.rules \
+                ${rootlibexecdir}/udev/rules.d/80-net-setup-link.rules \
++               ${rootlibexecdir}/udev/rules.d/81-net-dhcp.rules \
+                ${rootlibexecdir}/udev/rules.d/90-vconsole.rules \
++               ${rootlibexecdir}/udev/rules.d/README \
+                ${sysconfdir}/udev \
+                ${sysconfdir}/init.d/systemd-udevd \
+                ${systemd_unitdir}/system/*udev* \
+@@ -700,14 +701,14 @@ FILES_udev += "${base_sbindir}/udevd \
+                ${systemd_unitdir}/system/systemd-hwdb-update.service \
+               "
+ 
+-FILES_udev-hwdb = "${rootlibexecdir}/udev/hwdb.d \
++FILES:udev-hwdb = "${rootlibexecdir}/udev/hwdb.d \
+                    "
+ 
+-RCONFLICTS_${PN} = "tiny-init ${@bb.utils.contains('PACKAGECONFIG', 'resolved', 'resolvconf', '', d)}"
++RCONFLICTS:${PN} = "tiny-init ${@bb.utils.contains('PACKAGECONFIG', 'resolved', 'resolvconf', '', d)}"
+ 
+ INITSCRIPT_PACKAGES = "udev"
+-INITSCRIPT_NAME_udev = "systemd-udevd"
+-INITSCRIPT_PARAMS_udev = "start 03 S ."
++INITSCRIPT_NAME:udev = "systemd-udevd"
++INITSCRIPT_PARAMS:udev = "start 03 S ."
+ 
+ python __anonymous() {
+     if not bb.utils.contains('DISTRO_FEATURES', 'sysvinit', True, False, d):
+@@ -720,7 +721,7 @@ python do_warn_musl() {
+ }
+ addtask warn_musl before do_configure
+ 
+-ALTERNATIVE_${PN} = "halt reboot shutdown poweroff runlevel ${@bb.utils.contains('PACKAGECONFIG', 'resolved', 'resolv-conf', '', d)}"
++ALTERNATIVE:${PN} = "halt reboot shutdown poweroff runlevel ${@bb.utils.contains('PACKAGECONFIG', 'resolved', 'resolv-conf', '', d)}"
+ 
+ ALTERNATIVE_TARGET[resolv-conf] = "${sysconfdir}/resolv-conf.systemd"
+ ALTERNATIVE_LINK_NAME[resolv-conf] = "${sysconfdir}/resolv.conf"
+@@ -746,20 +747,20 @@ ALTERNATIVE_TARGET[runlevel] = "${base_bindir}/systemctl"
+ ALTERNATIVE_LINK_NAME[runlevel] = "${base_sbindir}/runlevel"
+ ALTERNATIVE_PRIORITY[runlevel] ?= "300"
+ 
+-pkg_postinst_${PN}_libc-glibc () {
++pkg_postinst:${PN}:libc-glibc () {
+ 	sed -e '/^hosts:/s/\s*\<myhostname\>//' \
+ 		-e 's/\(^hosts:.*\)\(\<files\>\)\(.*\)\(\<dns\>\)\(.*\)/\1\2 myhostname \3\4\5/' \
+ 		-i $D${sysconfdir}/nsswitch.conf
+ }
+ 
+-pkg_prerm_${PN}_libc-glibc () {
++pkg_prerm:${PN}:libc-glibc () {
+ 	sed -e '/^hosts:/s/\s*\<myhostname\>//' \
+ 		-e '/^hosts:/s/\s*myhostname//' \
+ 		-i $D${sysconfdir}/nsswitch.conf
+ }
+ 
+ PACKAGE_WRITE_DEPS += "qemu-native"
+-pkg_postinst_udev-hwdb () {
++pkg_postinst:udev-hwdb () {
+ 	if test -n "$D"; then
+ 		$INTERCEPT_DIR/postinst_intercept update_udev_hwdb ${PKG} mlprefix=${MLPREFIX} binprefix=${MLPREFIX} rootlibexecdir="${rootlibexecdir}" PREFERRED_PROVIDER_udev="${PREFERRED_PROVIDER_udev}"
+ 	else
+@@ -767,6 +768,6 @@ pkg_postinst_udev-hwdb () {
+ 	fi
+ }
+ 
+-pkg_prerm_udev-hwdb () {
++pkg_prerm:udev-hwdb () {
+ 	rm -f $D${sysconfdir}/udev/hwdb.bin
+ }

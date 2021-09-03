@@ -1,6 +1,6 @@
 LICENSE = "MIT"
 
-require recipes-mukube/images/mukube.bb
+require recipes-mukube/images/mukube-image.bb
 
 DESCRIPTION = "A development image build on the mukube image"
 

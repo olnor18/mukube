@@ -1,6 +1,6 @@
 LICENSE = "MIT"
 
-require recipes-mukube/images/mukube.bb
+require recipes-mukube/images/mukube-image.bb
 
 # Parameters passed directly to qemu  
 TEST_QEMUPARAMS = "-m 20000 -smp 4"
