@@ -9,3 +9,5 @@ local_conf_header:
     INHERIT += "testimage"
     TEST_SUITES = " kubeadm"
     DM_VERITY_IMAGE = "mukube-test-image"
+
+    HOSTTOOLS += "mkfs.ext4"
