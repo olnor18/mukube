@@ -32,28 +32,28 @@ do_install(){
     install -d ${D}/etc/
 
     # Set nameservers
-    install -m 0755 ${WORKDIR}/resolv.conf  ${D}/etc/resolv.conf
+    install -m 0644 ${WORKDIR}/resolv.conf  ${D}/etc/resolv.conf
 
     # Set crictl config
-    install -m 0755 ${WORKDIR}/crictl.yaml ${D}/etc/crictl.yaml
+    install -m 0644 ${WORKDIR}/crictl.yaml ${D}/etc/crictl.yaml
 
     # Setup kubeadm kubelet conf and kublet service
     install -d  ${D}/etc/systemd/system/kubelet.service.d/
-    install -m 0755 ${WORKDIR}/10-kubeadm.conf ${D}/etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-    install -m 0755 ${WORKDIR}/kubelet.service ${D}/etc/systemd/system/kubelet.service
+    install -m 0644 ${WORKDIR}/10-kubeadm.conf ${D}/etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+    install -m 0644 ${WORKDIR}/kubelet.service ${D}/etc/systemd/system/kubelet.service
 
     # Set kubeconfig 
     install -d ${D}/var/lib/kubelet/
-    install -m 0755 ${WORKDIR}/InitConfiguration.yaml ${D}/InitConfiguration.yaml
+    install -m 0644 ${WORKDIR}/InitConfiguration.yaml ${D}/InitConfiguration.yaml
 
     # Enable ipv4 port forward
     install -d ${D}/etc/sysctl.d/
-    install -m 0755 ${WORKDIR}/local.conf ${D}/etc/sysctl.d/local.conf
+    install -m 0644 ${WORKDIR}/local.conf ${D}/etc/sysctl.d/local.conf
 
     # Install and enable cri-o container runtime
     install -d ${D}/etc/crio/crio.conf.d/
-    install -m 0755 ${WORKDIR}/crio.conf ${D}/etc/crio/crio.conf.d/02-cgroup-manager.conf
-    install -m 0755 ${WORKDIR}/crio.service ${D}/etc/systemd/system/crio.service
+    install -m 0644 ${WORKDIR}/crio.conf ${D}/etc/crio/crio.conf.d/02-cgroup-manager.conf
+    install -m 0644 ${WORKDIR}/crio.service ${D}/etc/systemd/system/crio.service
 
     # Install container images for control plane
     for image in ${CONTAINER_IMAGES}; do
@@ -61,5 +61,5 @@ do_install(){
     done
 
     docker save -o ${WORKDIR}/images.tar ${CONTAINER_IMAGES} 
-    install -m 0755 ${WORKDIR}/images.tar ${D}/images.tar
+    install -m 0644 ${WORKDIR}/images.tar ${D}/images.tar
 }
