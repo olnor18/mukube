@@ -11,7 +11,8 @@ SRC_URI += "file://COPYING.MIT \
             file://kubelet.service \
             file://crio.conf \
             file://crio.service \
-            file://fstab"
+            file://fstab
+            file://resolv.conf"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
@@ -36,6 +37,9 @@ do_install(){
     install -d ${D}/config/
 
     install -m 0755 ${WORKDIR}/fstab ${D}/etc/fstab
+
+    # Set nameservers
+    install -m 0755 ${WORKDIR}/resolv.conf  ${D}/etc/resolv.conf
 
     # Set crictl config
     install -m 0755 ${WORKDIR}/crictl.yaml ${D}/etc/crictl.yaml
