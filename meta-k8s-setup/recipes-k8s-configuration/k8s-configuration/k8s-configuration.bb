@@ -37,7 +37,7 @@ do_install(){
     install -d ${D}/etc/
     install -d ${D}/config/
 
-    install -m 0755 ${WORKDIR}/fstab ${D}/etc/fstab
+    install -m 0644 ${WORKDIR}/fstab ${D}/etc/fstab
 
     # Set nameservers
     install -m 0644 ${WORKDIR}/resolv.conf  ${D}/etc/resolv.conf
@@ -51,7 +51,7 @@ do_install(){
     install -m 0644 ${WORKDIR}/kubelet.service ${D}/etc/systemd/system/kubelet.service
 
     # Autounpack config
-    install -m 0755 ${WORKDIR}/k8s-configuration.service ${D}/etc/systemd/system/k8s-configuration.service
+    install -m 0644 ${WORKDIR}/k8s-configuration.service ${D}/etc/systemd/system/k8s-configuration.service
 
     # Set kubeconfig 
     install -d ${D}/var/lib/kubelet/
