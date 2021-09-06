@@ -28,7 +28,8 @@ CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
                     k8s.gcr.io/kube-proxy:${KUBERNETES_VERSION} \
                     k8s.gcr.io/pause:3.4.1 \
                     k8s.gcr.io/etcd:3.4.13-0 \
-                    k8s.gcr.io/coredns/coredns:v1.8.0"
+                    k8s.gcr.io/coredns:1.7.0 \
+                    k8s.gcr.io/pause:3.2"
 
 do_install(){
     install -d ${D}/etc/
