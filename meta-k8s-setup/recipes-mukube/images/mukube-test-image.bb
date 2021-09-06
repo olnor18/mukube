@@ -17,5 +17,5 @@ APPEND += " ip=192.168.7.2::192.168.7.1:255.255.255.0"
 
 IMAGE_INSTALL += "k8s-testing"
 
-MK_CONFIG_FILE_PATH = "${BASE_WORKDIR}//core2-64-poky-linux/k8s-testing/1.0-r0/temp/config.ext4"
+MK_CONFIG_FILE_PATH = "${BASE_WORKDIR}/core2-64-poky-linux/k8s-testing/1.0-r0/temp/config.ext4"
 #TESTIMAGE_AUTO = "1"

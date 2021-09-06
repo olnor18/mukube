@@ -11,7 +11,7 @@ SRC_URI += "file://COPYING.MIT \
             file://kubelet.service \
             file://crio.conf \
             file://crio.service \
-            file://fstab
+            file://fstab \
             file://resolv.conf"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \

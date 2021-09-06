@@ -9,7 +9,7 @@ SRC_URI += "file://COPYING.MIT \
 
 
 do_install(){
-    mkdir ${T}/config/ -p
-    tar -zcvf ${T}/config/config.tar.gz ${WORKDIR}/InitConfiguration.yaml
-    mkfs.ext4 -d ${T}/config/ ${T}/config.ext4 1G
+    mkdir ${T}/config-partition/ -p
+    tar -zcvf ${T}/config-partition/config.tar.gz ${WORKDIR}/InitConfiguration.yaml
+    mkfs.ext4 -d ${T}/config-partition ${T}/config.ext4 1G
 }
