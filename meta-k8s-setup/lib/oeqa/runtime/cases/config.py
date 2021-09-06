@@ -9,7 +9,6 @@ class ConfigPartitionTest(OERuntimeTestCase):
 
     def test_config_present(self):
         # Check to see that the config tar is correctly mounted
-        (status, output) = self.target.run(f"ls /config | grep config.tar.gz -c")
-        self.assertEqual(status, 0, msg=output)
+        self.assertTrue(os.path.exists("/config/config.tar.gz"))
         # Count from grep should be 1
         self.assertEqual(output, "1", msg=output)
