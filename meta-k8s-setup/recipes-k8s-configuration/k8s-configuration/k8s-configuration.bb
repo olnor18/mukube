@@ -12,7 +12,8 @@ SRC_URI += "file://COPYING.MIT \
             file://crio.conf \
             file://crio.service \
             file://fstab \
-            file://resolv.conf"
+            file://resolv.conf \
+            file://k8s-configuration.service"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
@@ -49,9 +50,11 @@ do_install(){
     install -m 0755 ${WORKDIR}/10-kubeadm.conf ${D}/etc/systemd/system/kubelet.service.d/10-kubeadm.conf
     install -m 0755 ${WORKDIR}/kubelet.service ${D}/etc/systemd/system/kubelet.service
 
+    # Autounpack config
+    install -m 0755 ${WORKDIR}/k8s-configuration.service ${D}/etc/systemd/system/k8s-configuration.service
+
     # Set kubeconfig 
     install -d ${D}/var/lib/kubelet/
-    install -m 0755 ${WORKDIR}/InitConfiguration.yaml ${D}/InitConfiguration.yaml
 
     # Enable ipv4 port forward
     install -d ${D}/etc/sysctl.d/
