@@ -10,4 +10,3 @@ local_conf_header:
     TEST_SUITES = " kubeadm config" 
     DM_VERITY_IMAGE = "mukube-test-image"
 
-    HOSTTOOLS += "mkfs.ext4"
