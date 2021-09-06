@@ -37,7 +37,7 @@ do_install(){
     install -d ${D}/etc/
     install -d ${D}/config/
 
-    install -m 0755 ${WORKDIR}/fstab ${D}/etc/fstab
+    install -m 0644 ${WORKDIR}/fstab ${D}/etc/fstab
 
     # Set nameservers
     install -m 0644 ${WORKDIR}/resolv.conf  ${D}/etc/resolv.conf
