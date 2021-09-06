@@ -7,7 +7,6 @@ LIC_FILES_CHKSUM = "file://${WORKDIR}/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4d
 SRC_URI += "file://COPYING.MIT \
             file://InitConfiguration.yaml"
 
-
 do_install(){
     rm ${T}/config.ext4
     mkdir ${T}/config-partition/ -p
