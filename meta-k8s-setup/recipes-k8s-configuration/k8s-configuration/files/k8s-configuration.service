@@ -6,6 +6,3 @@ After=config.mount
 [Service]
 ExecStart=tar -xvf /config/config.tar.gz -C /
 Type=oneshot
-
-[Install]
-WantedBy=multi-user.target
