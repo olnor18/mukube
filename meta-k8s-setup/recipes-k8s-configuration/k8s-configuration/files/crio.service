@@ -1,9 +1,9 @@
 [Unit]
 Description=Container Runtime Interface for OCI (CRI-O)
 Documentation=https://github.com/cri-o/cri-o
-Wants=network.target k8s-configuration.service
+Wants=network.target 
 Before=kubelet.service
-After=network.target k8s-configuration.service
+After=network.target 
 
 [Service]
 Type=notify
