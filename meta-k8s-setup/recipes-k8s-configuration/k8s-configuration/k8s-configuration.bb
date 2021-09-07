@@ -11,7 +11,6 @@ SRC_URI += "file://COPYING.MIT \
             file://kubelet.service \
             file://crio.conf \
             file://crio.service \
-            file://fstab \
             file://resolv.conf \
             file://k8s-configuration.service"
 
@@ -19,8 +18,7 @@ FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
                  InitConfiguration.yaml \
                  images.tar \
-                 /config \
-                 /etc/fstab"
+                 /config \"
 
 KUBERNETES_VERSION = "v1.20.7"
 
@@ -41,9 +39,6 @@ SYSTEMD_SERVICE:${PN} = "k8s-configuration.service"
 do_install(){
     install -d ${D}/etc/
     install -d ${D}/config/
-
-    install -m 0644 ${WORKDIR}/fstab ${D}/etc/fstab
-
 
     # Set nameservers
     install -m 0644 ${WORKDIR}/resolv.conf  ${D}/etc/resolv.conf
