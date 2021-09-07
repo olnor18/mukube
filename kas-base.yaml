@@ -20,7 +20,10 @@ repos:
     patches:
       systemd:
         repo: mukube
-        path: patches/systemd/
+        path: patches/poky/systemd/
+      misc:
+        repo: mukube
+        path: patches/poky/misc/
   meta-openembedded:
     url: https://github.com/openembedded/meta-openembedded.git
     refspec: hardknott
@@ -30,6 +33,10 @@ repos:
       meta-python:
       meta-networking:
       meta-perl:
+    patches:
+      misc:
+        repo: mukube
+        path: patches/meta-openembedded/misc/
   meta-virtualization:
     url: https://git.yoctoproject.org/git/meta-virtualization
     refspec: hardknott 
@@ -57,6 +64,8 @@ local_conf_header:
     INITRAMFS_FSTYPES = "cpio.gz"
 
     HOSTTOOLS += "docker"
+    # 1GiB
+    WIC_CREATE_EXTRA_ARGS = "--extra-space 1073741824"
 
 bblayers_conf_header:
   meta-k8s-setup: |
