@@ -1,0 +1,15 @@
+[Unit]
+Description=service that unpacks the configuration files
+
+DefaultDependencies=no
+Conflicts=shutdown.target
+RequiresMountsFor=/config
+After=local-fs.target
+Before=sysinit.target shutdown.target
+
+[Service]
+ExecStart=tar -xvf /config/config.tar.gz -C /
+Type=oneshot
+
+[Install]
+WantedBy=config.mount
