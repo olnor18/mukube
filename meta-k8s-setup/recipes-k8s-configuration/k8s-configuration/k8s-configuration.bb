@@ -35,8 +35,8 @@ CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
 
 inherit systemd
 
-SYSTEMD_AUTO_ENABLE_k8s-configuration = "enable"
-SYSTEMD_SERVICE_k8s-configuration = "k8s-configuration.service"
+SYSTEMD_AUTO_ENABLE:${PN} = "enable"
+SYSTEMD_SERVICE:${PN} = "k8s-configuration.service"
 
 do_install(){
     install -d ${D}/etc/
