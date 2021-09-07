@@ -1,0 +1,3 @@
+- [ ] The new functionality was tested
+- [ ] The tests were executed with `bitbake mukube-test-image -c testimage` and they all succeeded
+- [ ] The new code was sufficiently documented
