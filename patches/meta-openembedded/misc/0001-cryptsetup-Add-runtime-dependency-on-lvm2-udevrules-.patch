@@ -1,10 +1,12 @@
-From 83c67173261059e12189c9945c62aed791d0d074 Mon Sep 17 00:00:00 2001
+From 9b02aa12203adc6219a6e0f8b114058e2487b59f Mon Sep 17 00:00:00 2001
 From: Kristian Klausen <kristian@klausen.dk>
 Date: Mon, 6 Sep 2021 14:08:19 +0200
 Subject: [PATCH] cryptsetup: Add runtime dependency on lvm2-udevrules for udev
 
 Without the udevrules cryptsetup luksOpen will be hanging with "Udev
 cookie 0xd4de0f6 (semid 5) waiting for zero".
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
 ---
  meta-oe/recipes-crypto/cryptsetup/cryptsetup_2.3.6.bb | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
