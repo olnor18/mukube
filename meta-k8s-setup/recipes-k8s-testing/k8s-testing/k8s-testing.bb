@@ -14,3 +14,5 @@ do_install(){
     cd ${WORKDIR} && tar -cvf ${T}/config-partition/config.tar.gz InitConfiguration.yaml 
     cd ${T} && mkfs.ext4 -d config-partition config.ext4 1G
 }
+
+do_install[nostamp] = "1"
