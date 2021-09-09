@@ -16,5 +16,12 @@ do_configure(){
 }
 
 do_deploy(){
-    install -m 755 ${DL_DIR}/mukube-configurator/artifacts/* ${DEPLOYDIR}/
+  install -d  ${DEPLOYDIR}/configs
+  install -d  ${DEPLOYDIR}/wks
+  
+  install -m 644 ${DL_DIR}/mukube-configurator/artifacts/* ${DEPLOYDIR}/configs
 }
+
+addtask deploy after do_compile
+
+do_deploy[nostamp] = "1"
