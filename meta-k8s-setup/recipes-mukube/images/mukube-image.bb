@@ -21,7 +21,7 @@ tar \
 libseccomp \
 tzdata \
 podman \
-sbctl \
+secure-boot-setup \
 " 
 
 # systemd only writes to the last console: https://github.com/systemd/systemd/issues/9899

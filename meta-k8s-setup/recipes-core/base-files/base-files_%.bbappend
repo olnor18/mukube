@@ -11,4 +11,6 @@ do_install:append() {
 
 	install -d ${D}${sysconfdir}/
         install -m 0644 ${WORKDIR}/crypttab ${D}${sysconfdir}/
+
+	ln -s /var/volatile/secureboot ${D}${datadir}/secureboot
 }
