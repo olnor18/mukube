@@ -6,13 +6,12 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 SRCREV = "bb7d4af2c0efa943f96d497cc19baa01f09a3f0c"
 SRC_URI = "git://github.com/distributed-technologies/mukube-configurator.git;branch=main \
     file://config"
+S = "${WORKDIR}/git"
 
 inherit deploy
 
-do_configure(){
-  mkdir ${DL_DIR}/mukube-configurator/config -p 
-  cat ${WORKDIR}/config > ${DL_DIR}/mukube-configurator/config/config 
-  cd ${DL_DIR}/mukube-configurator && make
+do_compile(){
+  CONFIG=${WORKDIR}/config make
 }
 
 do_deploy(){
@@ -25,3 +24,4 @@ do_deploy(){
 addtask deploy after do_compile
 
 do_deploy[nostamp] = "1"
+

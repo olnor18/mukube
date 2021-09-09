@@ -9,6 +9,7 @@ repos:
   mukube:
     layers:
       meta-k8s-setup:
+      meta-k8s-cluster:
   poky:
     url: https://git.yoctoproject.org/git/poky
     refspec: hardknott
