@@ -20,12 +20,12 @@ IMAGE_INSTALL += "k8s-testing k8s-cluster"
 MK_CONFIG_FILE_PATH = "${BASE_WORKDIR}/core2-64-poky-linux/k8s-testing/1.0-r0/temp/config.ext4"
 #TESTIMAGE_AUTO = "1"
 
+### TODO extract this code to a bbclass or something generic ###
 python do_create_wks() {
   from os import listdir
-  from os.path import isfile, join
   deploy_dir_image = d.getVar("DEPLOY_DIR_IMAGE")
-  mypath = f"{deploy_dir_image}/configs"
-  onlyfiles = [f for f in listdir(mypath)]
+  config_partitions_path = f"{deploy_dir_image}/configs"
+  configs = [f for f in listdir(config_partitions_path)]
   machine = d.getVar("MACHINE")
   base_name = d.getVar("IMAGE_BASENAME")
   wks_file = f"{deploy_dir_image}/{base_name}-{machine}.wks"
@@ -34,11 +34,13 @@ python do_create_wks() {
         template = f.read()
   f.close()
   
+  # Extract the path string that points to the current file system partition
   replace_string = template.split("part /config")[1].split("file=")[1].split("\"")[0]
-  for f in onlyfiles:
-    file_name = f.split(".ext4")[0]
+
+  for config in configs:
+    file_name = config.split(".ext4")[0]
     with open(f"{deploy_dir_image}/wks/{file_name}.wks", "w") as wks_file:
-        wks_file.write(template.replace(replace_string,f"{deploy_dir_image}/config/{f}"))
+        wks_file.write(template.replace(replace_string,f"{deploy_dir_image}/config/{config}"))
     wks_file.close()
  
 }

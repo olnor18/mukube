@@ -25,7 +25,9 @@ do_deploy(){
   for tar_config in ${B}/artifacts/*
   do
     mv $tar_config ${B}/tmp/config-partition/
+    # Keep basename but postfix file type
     file_name=$(basename $tar_config .tar).ext4
+    # Create the ext4 partition from the folder containing the tar
     cd ${B}/tmp/ && mkfs.ext4 -d config-partition $file_name 1G
     install -m 644 ${B}/tmp/$file_name ${DEPLOYDIR}/configs/$filename
     rm ${B}/tmp/config-partition/*
@@ -34,6 +36,7 @@ do_deploy(){
 
 addtask deploy after do_compile
 
+# The tasks will always run
 do_deploy[nostamp] = "1"
 do_compile[nostamp] = "1"
 
