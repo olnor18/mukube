@@ -36,7 +36,7 @@ python do_create_wks() {
   
   replace_string = template.split("part /config")[1].split("file=")[1].split("\"")[0]
   for f in onlyfiles:
-    file_name = f.split(".tar")[0]
+    file_name = f.split(".ext4")[0]
     with open(f"{deploy_dir_image}/wks/{file_name}.wks", "w") as wks_file:
         wks_file.write(template.replace(replace_string,f"{deploy_dir_image}/config/{f}"))
     wks_file.close()

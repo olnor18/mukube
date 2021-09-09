@@ -8,6 +8,8 @@ SRC_URI = "git://github.com/distributed-technologies/mukube-configurator.git;bra
     file://config"
 S = "${WORKDIR}/git"
 
+DEPENDS = "e2fsprogs-native"
+
 inherit deploy
 
 do_compile(){
@@ -16,12 +18,22 @@ do_compile(){
 
 do_deploy(){
   install -d  ${DEPLOYDIR}/configs
-  install -d  ${DEPLOYDIR}/wks
+  install -d  ${DEPLOYDIR}/wks 
+
+  mkdir ${B}/tmp/config-partition/ -p
   
-  install -m 644 ${DL_DIR}/mukube-configurator/artifacts/* ${DEPLOYDIR}/configs
+  for tar_config in ${B}/artifacts/*
+  do
+    mv $tar_config ${B}/tmp/config-partition/
+    file_name=$(basename $tar_config .tar).ext4
+    cd ${B}/tmp/ && mkfs.ext4 -d config-partition $file_name 1G
+    install -m 644 ${B}/tmp/$file_name ${DEPLOYDIR}/configs/$filename
+    rm ${B}/tmp/config-partition/*
+  done
 }
 
 addtask deploy after do_compile
 
 do_deploy[nostamp] = "1"
+do_compile[nostamp] = "1"
 
