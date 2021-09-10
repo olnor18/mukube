@@ -32,7 +32,6 @@ python do_create_wks() {
 
   with open(wks_file, 'r') as f:
         template = f.read()
-  f.close()
   
   # Extract the path string that points to the current file system partition
   replace_string = template.split("part /config")[1].split("file=")[1].split("\"")[0]
@@ -41,8 +40,6 @@ python do_create_wks() {
     file_name = config.split(".ext4")[0]
     with open(f"{deploy_dir_image}/wks/{file_name}.wks", "w") as wks_file:
         wks_file.write(template.replace(replace_string,f"{deploy_dir_image}/config/{config}"))
-    wks_file.close()
- 
 }
 
 addtask create_wks after do_image_complete before do_populate_lic_deploy
