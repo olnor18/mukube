@@ -66,7 +66,7 @@ local_conf_header:
 
     HOSTTOOLS += "docker"
     # 1GiB
-    WIC_CREATE_EXTRA_ARGS = "--extra-space 4294967296"
+    WIC_CREATE_EXTRA_ARGS = "--extra-space 1073741824"
 
 bblayers_conf_header:
   meta-k8s-setup: |
