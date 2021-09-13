@@ -4,6 +4,7 @@
 proc                 /proc                proc       defaults              0  0
 devpts               /dev/pts             devpts     mode=0620,ptmxmode=0666,gid=5      0  0
 tmpfs                /run                 tmpfs      mode=0755,nodev,nosuid,strictatime 0  0
-/dev/mapper/volatile /var/volatile ext4 defaults,x-systemd.requires=systemd-repart.service 0 1
+tmpfs                /var/volatile        tmpfs      defaults              0  0
+/dev/mapper/state    /var/state           ext4       defaults,x-systemd.requires=systemd-repart.service 0 1
 LABEL=config         /config              ext4       defaults              0  0
 
