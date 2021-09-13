@@ -12,6 +12,7 @@ The aim of the project is to build a minimal Linux distribution capable of runni
 
 * [Patches](docs/patches.md)
 * [Proxmox](docs/proxmox.md)
+* [Image (partitions/fs)](docs/image.md)
 
 ## Local configurations in `kas-local.yaml`
 A local kas file is _required_ for the kas tool to run, since we include it in our `kas-base.yaml` file. A minimal local kas file, which in turn does not change is: 
