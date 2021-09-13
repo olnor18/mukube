@@ -8,6 +8,7 @@ target: mukube-image
 repos:
   mukube:
     layers:
+      meta-secure-boot:
       meta-k8s-setup:
   poky:
     url: https://git.yoctoproject.org/git/poky
