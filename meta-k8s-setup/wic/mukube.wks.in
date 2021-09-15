@@ -5,4 +5,4 @@ part / --source rawcopy --sourceparams="file=${IMGDEPLOYDIR}/${DM_VERITY_IMAGE}-
 
 part /config --source rawcopy --sourceparams="file=${MUKUBE_CONFIG_PARTITION}" --part-type 0FC63DAF-8483-4772-8E79-3D69D8477DE4 --label config --fstype ext4 --align 1024
 
-bootloader --ptable gpt --timeout=5 --append=""
+bootloader --ptable gpt --timeout=0 --append=""
