@@ -11,7 +11,6 @@ SRC_URI += "file://COPYING.MIT \
             file://kubelet.service \
             file://crio.conf \
             file://crio.service \
-            file://resolv.conf \
             file://k8s-configuration.service"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
@@ -39,9 +38,6 @@ SYSTEMD_SERVICE:${PN} = "k8s-configuration.service"
 do_install(){
     install -d ${D}/etc/
     install -d ${D}/config/
-
-    # Set nameservers
-    install -m 0644 ${WORKDIR}/resolv.conf  ${D}/etc/resolv.conf
 
     # Set crictl config
     install -m 0644 ${WORKDIR}/crictl.yaml ${D}/etc/crictl.yaml
