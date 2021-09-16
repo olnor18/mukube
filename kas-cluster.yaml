@@ -6,8 +6,8 @@ repos:
   mukube:
     layers:
       meta-k8s-cluster:
-target: mukube-test-image
+target: mukube-cluster-image
 local_conf_header:
   dev: |
-    DM_VERITY_IMAGE = "mukube-test-image"
+    DM_VERITY_IMAGE = "mukube-cluster-image"
 
