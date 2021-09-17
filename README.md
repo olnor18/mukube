@@ -42,6 +42,7 @@ To run the generated OS in qemu use:
 
 *Be sure your user has access to `/dev/kvm` for [KVM](https://en.wikipedia.org/wiki/Kernel-based_Virtual_Machine) acceleration, on Ubuntu this can be done by running: `sudo usermod -a -G kvm $USER`.*
 
+## The test image
 To generate a testable image run: 
 
 `kas build mukube/kas-testing.yaml --update`
@@ -50,9 +51,9 @@ To run tests launch shell with:
 
 `kas shell mukube/kas-testing.yaml --update`
 
-and run:
+and run the `testimage` task with:
 
-`bitbake qemu-helper-native && bitbake mukube-test-image -c testimage ` 
+`bitbake mukube-test-image -c testimage ` 
 
 To clean the test build run:
 
@@ -61,3 +62,6 @@ To clean the test build run:
 For a full command that cleans, builds and runs the tests:
 
 `bitbake -c clean mukube-test-image && bitbake mukube-test-image && bitbake mukube-test-image -c testimage ` 
+
+## Building a cluster
+We have a target for building multiple `wic` image files. The kas file to use is `kas-cluster.yaml`. 
