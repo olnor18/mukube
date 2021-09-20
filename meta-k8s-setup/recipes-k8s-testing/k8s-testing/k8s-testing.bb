@@ -1,6 +1,6 @@
 
 SUMMARY = "Writing files needed for testing kubernetes"
-DESCRIPTION = ""
+DESCRIPTION = "Generates a config partition for tests"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
@@ -9,9 +9,16 @@ SRC_URI += "file://InitConfiguration.yaml \
 
 DEPENDS = "e2fsprogs-native"
 
-do_install(){
-    rm -f ${T}/config.ext4
-    mkdir ${T}/config-partition/ -p
-    cd ${WORKDIR} && tar --transform 's,\(20-wired.network\),/etc/systemd/network/\1,' -cvf ${T}/config-partition/config.tar.gz InitConfiguration.yaml 20-wired.network
-    cd ${T} && mkfs.ext4 -d config-partition config.ext4 1G
+inherit deploy
+
+do_compile(){
+	mkdir -p config-partition
+	tar -cvf config-partition/config.tar.gz --transform 's,\(20-wired.network\),/etc/systemd/network/\1,' ../InitConfiguration.yaml ../20-wired.network
+	mkfs.ext4 -d config-partition test_config.ext4 1G
 }
+
+do_deploy(){
+	mv test_config.ext4 ${DEPLOYDIR}
+}
+
+addtask do_deploy after do_compile

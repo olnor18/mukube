@@ -10,6 +10,7 @@ repos:
     layers:
       meta-secure-boot:
       meta-k8s-setup:
+      meta-k8s-cluster:
   poky:
     url: https://git.yoctoproject.org/git/poky
     refspec: hardknott
