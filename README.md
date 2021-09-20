@@ -7,7 +7,11 @@ Use [kas](https://kas.readthedocs.io/en/latest/userguide.html#usage) to build a 
 * Invoke the script `kas checkout --update mukube/kas.yaml` from the `~/yocto` folder to setup the build environment.
 * Build the project using kas by running `kas build --update mukube/kas.yaml`.
 
-### Using the NFS server for sstate mirror and downloads
+## Documentation
+
+* [Patches](docs/patches.md)
+
+## Using the NFS server for sstate mirror and downloads
 To use the nfs server it must be mounted on the machine you are working on. 
 1. Install the package `nsf-common` using `apt`
 2. add the following line to `/etc/fstab` in order to mount the nfs at boot `<ip_of_nfs-server>:/	/mnt	nfs	auto	0	0` 
@@ -38,7 +42,7 @@ If your kas configuration outputs an iso file it will be located in the ./build/
 
 To run the generated OS in qemu use:
 
-`runqemu wic ovmf mukube nographic`
+`runqemu wic ovmf.secboot.code mukube nographic`
 
 *Be sure your user has access to `/dev/kvm` for [KVM](https://en.wikipedia.org/wiki/Kernel-based_Virtual_Machine) acceleration, on Ubuntu this can be done by running: `sudo usermod -a -G kvm $USER`.*
 
