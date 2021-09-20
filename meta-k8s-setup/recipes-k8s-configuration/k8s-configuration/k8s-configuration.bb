@@ -2,6 +2,7 @@ SUMMARY = "Write configuration files needed for Kubernetes and CRI-O"
 DESCRIPTION = ""
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
+DEPENDS = "skopeo-native"
 
 SRC_URI += "file://COPYING.MIT \
             file://local.conf \
@@ -17,7 +18,7 @@ SRC_URI += "file://COPYING.MIT \
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
                  InitConfiguration.yaml \
-                 images.tar \
+                 /var/lib/skopeo \
                  "
 
 KUBERNETES_VERSION = "v1.20.7"
@@ -64,10 +65,10 @@ do_install(){
     install -m 0644 ${WORKDIR}/crio.service ${D}/etc/systemd/system/crio.service
 
     # Install container images for control plane
+    install -d ${D}/var/lib/skopeo
     for image in ${CONTAINER_IMAGES}; do
-        docker pull $image
+        skopeo sync --src docker --dest dir "${image}" ${D}/var/lib/skopeo
     done
-
-    docker save -o ${WORKDIR}/images.tar ${CONTAINER_IMAGES} 
-    install -m 0644 ${WORKDIR}/images.tar ${D}/images.tar
+    # Fix wrong owner/group due to pseudo apparently not working with skopeo (maybe because it is a Go program?)
+    chown -R root:root ${D}/var/lib/skopeo
 }

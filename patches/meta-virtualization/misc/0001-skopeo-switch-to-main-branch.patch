@@ -1,0 +1,29 @@
+From ae44f7f5040a26abdc56c25b43b6a8bf13ae7535 Mon Sep 17 00:00:00 2001
+From: Bruce Ashfield <bruce.ashfield@gmail.com>
+Date: Sun, 11 Jul 2021 20:00:00 -0400
+Subject: [PATCH] skopeo: switch to 'main' branch
+
+Skopeo has migrated from master to main, so we adjust our branch
+accordingly.
+
+Signed-off-by: Bruce Ashfield <bruce.ashfield@gmail.com>
+---
+ recipes-containers/skopeo/skopeo_git.bb | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/recipes-containers/skopeo/skopeo_git.bb b/recipes-containers/skopeo/skopeo_git.bb
+index 19ac938..34541b1 100644
+--- a/recipes-containers/skopeo/skopeo_git.bb
++++ b/recipes-containers/skopeo/skopeo_git.bb
+@@ -21,7 +21,7 @@ RDEPENDS_${PN} = " \
+ "
+ 
+ SRC_URI = " \
+-    git://github.com/containers/skopeo;branch=master \
++    git://github.com/containers/skopeo;branch=main \
+     file://0001-Makefile-use-pkg-config-instead-of-gpgme-config.patch \
+     file://storage.conf \
+     file://registries.conf \
+-- 
+2.25.1
+

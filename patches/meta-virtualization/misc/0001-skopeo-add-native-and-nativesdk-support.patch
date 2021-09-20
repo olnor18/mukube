@@ -1,0 +1,68 @@
+From bbf7ddbe0269cf3cb6d8dcae4495d7983d256016 Mon Sep 17 00:00:00 2001
+From: "Xu, Yanfei" <yanfei.xu@windriver.com>
+Date: Tue, 22 Jun 2021 17:55:31 +0800
+Subject: [PATCH] skopeo: add native and nativesdk support
+
+1.Add native and nativesdk support.
+
+2.Replace "multipath-tools" with "libdevmapper" and "lvm2". Because
+the really direct DEPENDS package is "libdevmapper" and "lvm2". Log
+of do_comopile as below:
+
+-----------------[cut here]---------------------
+DEBUG: Executing shell function do_compile
+NOTE: make -j 40 BUILDTAGS= bin/skopeo
+CGO_CFLAGS="-I/...../usr/include"
+CGO_LDFLAGS="-L/...../usr/lib
+-lgpgme -lgpg-error -lassuan" GO111MODULE=on go build -mod=vendor
+"-buildmode=pie" -ldflags '-X
+main.gitCommit=8efffce8befc2de87670ba75d6c86ada61e869fd ' -gcflags ""
+-tags "" -o bin/skopeo ./cmd/skopeo
+Package devmapper was not found in the pkg-config search path.
+Perhaps you should add the directory containing `devmapper.pc'
+to the PKG_CONFIG_PATH environment variable
+No package 'devmapper' found
+pkg-config: exit status 1
+make: *** [Makefile:134: bin/skopeo] Error 2
+
+Signed-off-by: Yanfei Xu <yanfei.xu@windriver.com>
+
+Signed-off-by: Bruce Ashfield <bruce.ashfield@gmail.com>
+---
+ recipes-containers/skopeo/skopeo_git.bb | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/recipes-containers/skopeo/skopeo_git.bb b/recipes-containers/skopeo/skopeo_git.bb
+index 2c29246..6c95bf3 100644
+--- a/recipes-containers/skopeo/skopeo_git.bb
++++ b/recipes-containers/skopeo/skopeo_git.bb
+@@ -5,7 +5,8 @@ LIC_FILES_CHKSUM = "file://src/import/LICENSE;md5=7e611105d3e369954840a6668c4385
+ 
+ DEPENDS = " \
+     gpgme \
+-    multipath-tools \
++    libdevmapper \
++    lvm2 \
+     btrfs-tools \
+     glib-2.0 \
+     ostree \
+@@ -80,4 +81,16 @@ do_install() {
+ 	install ${WORKDIR}/registries.conf ${D}/${sysconfdir}/containers/registries.conf
+ }
+ 
++do_install_append_class-native() {
++    create_cmdline_wrapper ${D}/${sbindir}/skopeo \
++        --policy ${sysconfdir}/containers/policy.json
++}
++
++do_install_append_class-nativesdk() {
++    create_cmdline_wrapper ${D}/${sbindir}/skopeo \
++        --policy ${sysconfdir}/containers/policy.json
++}
++
+ INSANE_SKIP_${PN} += "ldflags"
++
++BBCLASSEXTEND = "native nativesdk"
+-- 
+2.25.1
+
