@@ -34,10 +34,6 @@ repos:
       meta-python:
       meta-networking:
       meta-perl:
-    patches:
-      misc:
-        repo: mukube
-        path: patches/meta-openembedded/misc/
   meta-virtualization:
     url: https://git.yoctoproject.org/git/meta-virtualization
     refspec: hardknott 
