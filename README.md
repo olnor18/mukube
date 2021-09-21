@@ -10,6 +10,7 @@ Use [kas](https://kas.readthedocs.io/en/latest/userguide.html#usage) to build a 
 ## Documentation
 
 * [Patches](docs/patches.md)
+* [Proxmox](docs/proxmox.md)
 
 ## Using the NFS server for sstate mirror and downloads
 To use the nfs server it must be mounted on the machine you are working on. 
