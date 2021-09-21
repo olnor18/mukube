@@ -38,6 +38,10 @@ repos:
   meta-virtualization:
     url: https://git.yoctoproject.org/git/meta-virtualization
     refspec: hardknott 
+    patches:
+      misc:
+        repo: mukube
+        path: patches/meta-virtualization/misc/
   meta-security: 
     url: https://git.yoctoproject.org/cgit/cgit.cgi/meta-security/
     refspec: hardknott
@@ -61,7 +65,6 @@ local_conf_header:
     INITRAMFS_IMAGE = "dm-verity-image-initramfs"
     INITRAMFS_FSTYPES = "cpio.gz"
 
-    HOSTTOOLS += "docker"
     # 1GiB
     WIC_CREATE_EXTRA_ARGS = "--extra-space 1073741824"
 
