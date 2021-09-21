@@ -11,13 +11,14 @@ SRC_URI += "file://COPYING.MIT \
             file://kubelet.service \
             file://crio.conf \
             file://crio.service \
+            file://copy-config-to-state.service \
             file://k8s-configuration.service"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
                  InitConfiguration.yaml \
                  images.tar \
-                 /config \"
+                 "
 
 KUBERNETES_VERSION = "v1.20.7"
 
@@ -33,11 +34,10 @@ CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
 inherit systemd
 
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
-SYSTEMD_SERVICE:${PN} = "k8s-configuration.service"
+SYSTEMD_SERVICE:${PN} = "k8s-configuration.service copy-config-to-state.service"
 
 do_install(){
     install -d ${D}/etc/
-    install -d ${D}/config/
 
     # Set crictl config
     install -m 0644 ${WORKDIR}/crictl.yaml ${D}/etc/crictl.yaml
@@ -48,6 +48,7 @@ do_install(){
     install -m 0644 ${WORKDIR}/kubelet.service ${D}/etc/systemd/system/kubelet.service
 
     # Autounpack config and enable service
+    install -m 0644 ${WORKDIR}/copy-config-to-state.service ${D}/etc/systemd/system/copy-config-to-state.service
     install -m 0644 ${WORKDIR}/k8s-configuration.service ${D}/etc/systemd/system/k8s-configuration.service
 
     # Set kubeconfig 
