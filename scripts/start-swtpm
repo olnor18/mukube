@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Starts the swtpm
+swtpm_oe="$(echo tmp/work/*/swtpm-wrappers-native/*/swtpm_oe.sh)"
+
+if [ ! -f "$swtpm_oe" ] then
+  echo "swtpm_oe.sh not found, exiting..."
+  exit 1
+fi
+
+echo "Running ${swtpm_oe}"
+
+mkdir -p /tmp/mytpm1
+"$swtpm_oe" socket --tpmstate dir=/tmp/mytpm1 --ctrl type=unixio,path=/tmp/mytpm1/swtpm-sock --log level=20 --tpm2 
