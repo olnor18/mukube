@@ -1,11 +1,13 @@
 LICENSE = "MIT"
+DESCRIPTION = "A development image build on the mukube image"
 
 require recipes-mukube/images/mukube-image.bb
 
-DESCRIPTION = "A development image build on the mukube image"
-
-
-IMAGE_FEATURES += "debug-tweaks allow-empty-password empty-root-password"
+IMAGE_FEATURES += "\
+    debug-tweaks \
+    allow-empty-password \
+    empty-root-password \
+    "
 
 IMAGE_INSTALL += "k8s-testing"
 
