@@ -1,0 +1,87 @@
+From 6cabb2d2d87cae92480af5490de5e4fbac541a4b Mon Sep 17 00:00:00 2001
+From: skovbakke <78202835+skovbakke@users.noreply.github.com>
+Date: Mon, 20 Sep 2021 14:26:16 +0000
+Subject: [PATCH] Update swtpm to 0.6.1 and libtpms to 0.8.7
+
+---
+ .../libtpm/{libtpm_0.8.2.bb => libtpm_0.8.7.bb}           | 2 +-
+ meta-tpm/recipes-tpm/swtpm/swtpm-wrappers-native.bb       | 6 +++---
+ .../recipes-tpm/swtpm/{swtpm_0.5.2.bb => swtpm_0.6.1.bb}  | 8 ++++----
+ 3 files changed, 8 insertions(+), 8 deletions(-)
+ rename meta-tpm/recipes-tpm/libtpm/{libtpm_0.8.2.bb => libtpm_0.8.7.bb} (88%)
+ rename meta-tpm/recipes-tpm/swtpm/{swtpm_0.5.2.bb => swtpm_0.6.1.bb} (86%)
+
+diff --git a/meta-tpm/recipes-tpm/libtpm/libtpm_0.8.2.bb b/meta-tpm/recipes-tpm/libtpm/libtpm_0.8.7.bb
+similarity index 88%
+rename from meta-tpm/recipes-tpm/libtpm/libtpm_0.8.2.bb
+rename to meta-tpm/recipes-tpm/libtpm/libtpm_0.8.7.bb
+index 9784aa1..95ba5c5 100644
+--- a/meta-tpm/recipes-tpm/libtpm/libtpm_0.8.2.bb
++++ b/meta-tpm/recipes-tpm/libtpm/libtpm_0.8.7.bb
+@@ -2,7 +2,7 @@ SUMMARY = "LIBPM - Software TPM Library"
+ LICENSE = "BSD-3-Clause"
+ LIC_FILES_CHKSUM = "file://LICENSE;md5=e73f0786a936da3814896df06ad225a9"
+ 
+-SRCREV = "f66a719eda0b492ea3ec7852421a9d98db0a0621"
++SRCREV = "f6dd8f55eab4910131ec6a6a570dcd7951bd10e4"
+ SRC_URI = "git://github.com/stefanberger/libtpms.git;branch=stable-0.8"
+ 
+ PE = "1"
+diff --git a/meta-tpm/recipes-tpm/swtpm/swtpm-wrappers-native.bb b/meta-tpm/recipes-tpm/swtpm/swtpm-wrappers-native.bb
+index 644f3ac..3baef27 100644
+--- a/meta-tpm/recipes-tpm/swtpm/swtpm-wrappers-native.bb
++++ b/meta-tpm/recipes-tpm/swtpm/swtpm-wrappers-native.bb
+@@ -14,18 +14,18 @@ do_create_wrapper () {
+     for i in `find ${bindir} ${base_bindir} ${sbindir} ${base_sbindir} -name 'swtpm*' -perm /+x -type f`; do
+         exe=`basename $i`
+         case $exe in
+-            swtpm_setup.sh)
++            swtpm_setup)
+                 cat >${WORKDIR}/swtpm_setup_oe.sh <<EOF
+ #! /bin/sh
+ #
+-# Wrapper around swtpm_setup.sh which adds parameters required to
++# Wrapper around swtpm_setup which adds parameters required to
+ # run the setup as non-root directly from the native sysroot.
+ 
+ PATH="${bindir}:${base_bindir}:${sbindir}:${base_sbindir}:\$PATH"
+ export PATH
+ 
+ # tcsd only allows to be run as root or tss. Pretend to be root...
+-exec env ${FAKEROOTENV} ${FAKEROOTCMD} swtpm_setup.sh --config ${STAGING_DIR_NATIVE}/etc/swtpm_setup.conf "\$@"
++exec env ${FAKEROOTENV} ${FAKEROOTCMD} swtpm_setup --config ${STAGING_DIR_NATIVE}/etc/swtpm_setup.conf "\$@"
+ EOF
+                 ;;
+             swtpm_setup)
+diff --git a/meta-tpm/recipes-tpm/swtpm/swtpm_0.5.2.bb b/meta-tpm/recipes-tpm/swtpm/swtpm_0.6.1.bb
+similarity index 86%
+rename from meta-tpm/recipes-tpm/swtpm/swtpm_0.5.2.bb
+rename to meta-tpm/recipes-tpm/swtpm/swtpm_0.6.1.bb
+index caf99e8..fd7cde3 100644
+--- a/meta-tpm/recipes-tpm/swtpm/swtpm_0.5.2.bb
++++ b/meta-tpm/recipes-tpm/swtpm/swtpm_0.6.1.bb
+@@ -7,10 +7,10 @@ DEPENDS = "libtasn1 coreutils-native expect socat glib-2.0 net-tools-native libt
+ 
+ # configure checks for the tools already during compilation and
+ # then swtpm_setup needs them at runtime
+-DEPENDS_append = " tpm-tools-native expect-native socat-native python3-pip-native python3-cryptography-native"
++DEPENDS_append = " tpm-tools-native expect-native socat-native json-glib"
+ 
+-SRCREV = "e59c0c1a7b4c8d652dbb280fd6126895a7057464"
+-SRC_URI = "git://github.com/stefanberger/swtpm.git;branch=stable-0.5 \
++SRCREV = "98187d24fe14851653a7c46eb16e9c5f0b9beaa1"
++SRC_URI = "git://github.com/stefanberger/swtpm.git;branch=stable-0.6 \
+            file://ioctl_h.patch \
+            file://oe_configure.patch \
+            "
+@@ -49,6 +49,6 @@ FILES_${PN}-cuse = "${bindir}/swtpm_cuse"
+ 
+ INSANE_SKIP_${PN}   += "dev-so"
+ 
+-RDEPENDS_${PN} = "libtpm expect socat bash tpm-tools python3 python3-cryptography python3-twisted"
++RDEPENDS_${PN} = "libtpm"
+ 
+ BBCLASSEXTEND = "native nativesdk"
+-- 
+2.25.1
+
