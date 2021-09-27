@@ -1,0 +1,17 @@
+[Unit]
+Description=Wipe all key slots for /var/state and enroll the TPM2 chip with the default PCRs (PCR 7)
+ConditionPathExists=/var/state/tpm-pcr-not-enrolled
+DefaultDependencies=no
+Conflicts=shutdown.target
+After=local-fs.target secure-boot-setup.service
+Before=sysinit.target shutdown.target
+SuccessAction=reboot
+
+[Service]
+Type=oneshot
+Environment=PASSWORD=
+ExecStart=systemd-cryptenroll /dev/disk/by-partuuid/ce28e84c-ab6b-4852-9301-86083840b6f4 --wipe-slot=all --tpm2-device=auto
+ExecStart=rm /var/state/tpm-pcr-not-enrolled
+
+[Install]
+WantedBy=sysinit.target

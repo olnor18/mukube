@@ -1,3 +1,4 @@
 systemd_247.6-249.3.patch
 0001-systemd-Add-repart-PACKAGECONFIG.patch
 0001-systemd-Add-homed-PACKAGECONFIG.patch
+0001-systemd-Add-tpm2-PACKAGECONFIG.patch
