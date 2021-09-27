@@ -47,6 +47,15 @@ To run the generated OS in qemu use:
 
 *Be sure your user has access to `/dev/kvm` for [KVM](https://en.wikipedia.org/wiki/Kernel-based_Virtual_Machine) acceleration, on Ubuntu this can be done by running: `sudo usermod -a -G kvm $USER`.*
 
+### Launching the swtpm
+The image builds swtpm and there is a simple script to launch it. To run swtpm, launch another shell `kas shell mukube/<kas-file>` after building the image you want to test. Then launch the swtpm by running:
+
+`start-swtpm`
+
+And start the image using the runqemu command above with the following extra parameters: 
+
+`qemuparams="-chardev socket,id=chrtpm,path=/tmp/mytpm1/swtpm-sock -tpmdev emulator,id=tpm0,chardev=chrtpm -device tpm-tis,tpmdev=tpm0"`
+
 ## The test image
 To generate a testable image run: 
 

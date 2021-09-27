@@ -6,7 +6,7 @@ target: mukube-test-image
 
 local_conf_header:
   testing: |
-    INHERIT += "testimage"
+    IMAGE_CLASSES += "testimage"
     TEST_SUITES = " kubeadm config" 
     DM_VERITY_IMAGE = "mukube-test-image"
 
