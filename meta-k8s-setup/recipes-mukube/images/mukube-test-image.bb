@@ -10,3 +10,5 @@ TEST_RUNQEMUPARAMS = "wic ovmf kvm"
 IMAGE_FEATURES += "\
     ssh-server-dropbear \
     "
+
+TESTIMAGE_AUTO = "1"
