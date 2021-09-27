@@ -49,9 +49,9 @@ repos:
       .:
       meta-tpm:
     patches:
-      swtpm:
+      misc:
         repo: mukube
-        path: patches/meta-security/swtpm/
+        path: patches/meta-security/misc/
   meta-selinux:
     url: https://git.yoctoproject.org/cgit/cgit.cgi/meta-selinux/
     refspec: hardknott
