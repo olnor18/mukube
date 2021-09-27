@@ -3,7 +3,7 @@
 # Starts the swtpm
 swtpm_oe="$(echo tmp/work/*/swtpm-wrappers-native/*/swtpm_oe.sh)"
 
-if [ ! -f "$swtpm_oe" ] then
+if [ ! -f "$swtpm_oe" ]; then
   echo "swtpm_oe.sh not found, exiting..."
   exit 1
 fi
