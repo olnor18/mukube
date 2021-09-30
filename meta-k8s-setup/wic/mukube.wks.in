@@ -1,5 +1,5 @@
 # Documentation at: https://docs.yoctoproject.org/ref-manual/kickstart.html
-part /boot --source bootimg-efi --sourceparams="loader=systemd-boot,create-unified-kernel-image=true,initrd=${INITRAMFS_IMAGE}-${MACHINE}.${INITRAMFS_FSTYPES}" --part-type C12A7328-F81F-11D2-BA4B-00A0C93EC93B --align 1024 --use-uuid
+part /boot --source bootimg-efi --sourceparams="loader=systemd-boot,create-unified-kernel-image=true,initrd=amd-microcode.cpio;microcode.cpio;${INITRAMFS_IMAGE}-${MACHINE}.${INITRAMFS_FSTYPES}" --part-type C12A7328-F81F-11D2-BA4B-00A0C93EC93B --align 1024 --use-uuid
 
 part / --source rawcopy --sourceparams="file=${IMGDEPLOYDIR}/${DM_VERITY_IMAGE}-${MACHINE}.${DM_VERITY_IMAGE_TYPE}.verity" --part-type 44479540-f297-41b2-9af7-d131d5f0458a --align 1024 --use-uuid
 

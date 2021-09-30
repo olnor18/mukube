@@ -22,6 +22,8 @@ libseccomp \
 tzdata \
 podman \
 secure-boot-setup \
+intel-microcode \
+amd-microcode \
 " 
 
 # systemd only writes to the last console: https://github.com/systemd/systemd/issues/9899

@@ -55,6 +55,9 @@ repos:
   meta-selinux:
     url: https://git.yoctoproject.org/cgit/cgit.cgi/meta-selinux/
     refspec: hardknott
+  meta-intel:
+    url: https://git.yoctoproject.org/git/meta-intel/
+    refspec: hardknott
 local_conf_header:
   meta-k8s-setup: |
     EXTRA_IMAGEDEPENDS += "ovmf qemu-system-native qemu-helper-native swtpm-wrappers-native"

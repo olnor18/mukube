@@ -1,0 +1,54 @@
+From 42344347be29f0997cc2f7636d9603b1fe1875ae Mon Sep 17 00:00:00 2001
+From: Richard Purdie <richard.purdie@linuxfoundation.org>
+Date: Wed, 28 Jul 2021 23:28:15 +0100
+Subject: [PATCH] Convert to new override syntax
+
+This is the result of automated script conversion:
+
+scripts/contrib/convert-overrides.py <oe-core directory>
+
+converting the metadata to use ":" as the override character instead of "_".
+
+Signed-off-by: Richard Purdie <richard.purdie@linuxfoundation.org>
+---
+ meta/classes/image_types_wic.bbclass | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/meta/classes/image_types_wic.bbclass b/meta/classes/image_types_wic.bbclass
+index 49be1da77a..2f1a0b709c 100644
+--- a/meta/classes/image_types_wic.bbclass
++++ b/meta/classes/image_types_wic.bbclass
+@@ -26,7 +26,7 @@ def wks_search(files, search_path):
+ 
+ WIC_CREATE_EXTRA_ARGS ?= ""
+ 
+-IMAGE_CMD_wic () {
++IMAGE_CMD:wic () {
+ 	out="${IMGDEPLOYDIR}/${IMAGE_NAME}"
+ 	build_wic="${WORKDIR}/build-wic"
+ 	tmp_wic="${WORKDIR}/tmp-wic"
+@@ -42,7 +42,7 @@ IMAGE_CMD_wic () {
+ 	BUILDDIR="${TOPDIR}" PSEUDO_UNLOAD=1 wic create "$wks" --vars "${STAGING_DIR}/${MACHINE}/imgdata/" -e "${IMAGE_BASENAME}" -o "$build_wic/" -w "$tmp_wic" ${WIC_CREATE_EXTRA_ARGS}
+ 	mv "$build_wic/$(basename "${wks%.wks}")"*.direct "$out${IMAGE_NAME_SUFFIX}.wic"
+ }
+-IMAGE_CMD_wic[vardepsexclude] = "WKS_FULL_PATH WKS_FILES TOPDIR"
++IMAGE_CMD:wic[vardepsexclude] = "WKS_FULL_PATH WKS_FILES TOPDIR"
+ do_image_wic[cleandirs] = "${WORKDIR}/build-wic"
+ 
+ PSEUDO_IGNORE_PATHS .= ",${WORKDIR}/build-wic"
+@@ -60,9 +60,9 @@ do_image_wic[deptask] += "do_image_complete"
+ WKS_FILE_DEPENDS_DEFAULT = '${@bb.utils.contains_any("BUILD_ARCH", [ 'x86_64', 'i686' ], "syslinux-native", "",d)}'
+ WKS_FILE_DEPENDS_DEFAULT += "bmap-tools-native cdrtools-native btrfs-tools-native squashfs-tools-native e2fsprogs-native"
+ WKS_FILE_DEPENDS_BOOTLOADERS = ""
+-WKS_FILE_DEPENDS_BOOTLOADERS_x86 = "syslinux grub-efi systemd-boot"
+-WKS_FILE_DEPENDS_BOOTLOADERS_x86-64 = "syslinux grub-efi systemd-boot"
+-WKS_FILE_DEPENDS_BOOTLOADERS_x86-x32 = "syslinux grub-efi"
++WKS_FILE_DEPENDS_BOOTLOADERS:x86 = "syslinux grub-efi systemd-boot"
++WKS_FILE_DEPENDS_BOOTLOADERS:x86-64 = "syslinux grub-efi systemd-boot"
++WKS_FILE_DEPENDS_BOOTLOADERS:x86-x32 = "syslinux grub-efi"
+ 
+ WKS_FILE_DEPENDS ??= "${WKS_FILE_DEPENDS_DEFAULT} ${WKS_FILE_DEPENDS_BOOTLOADERS}"
+ 
+-- 
+2.25.1
+
