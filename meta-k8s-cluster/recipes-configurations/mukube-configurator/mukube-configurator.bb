@@ -26,7 +26,7 @@ do_deploy(){
 	do
 		root_dir=${T}/config_roots/$(basename $configfile .tar)-root
 		mkdir -p $root_dir
-		cp $configfile $root_dir
+		cp $configfile $root_dir/config.tar
 		# Create the ext4 partition containing the rootdir
 		mkfs.ext4 -d $root_dir ${DEPLOYDIR}/configs/$(basename $configfile .tar).ext4 1G
 	done
