@@ -8,7 +8,7 @@ After=local-fs.target copy-config-to-state.service
 Before=sysinit.target shutdown.target
 
 [Service]
-ExecStart=tar -xvf /var/state/config/config.tar.gz -C /
+ExecStart=tar -xvf /var/state/config/config.tar -C /
 Type=oneshot
 
 [Install]

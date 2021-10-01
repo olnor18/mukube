@@ -1,5 +1,5 @@
 [Unit]
-Description=copy config.tar.gz to the encrypted state partition
+Description=copy config.tar to the encrypted state partition
 RequiresMountsFor=/var/state
 ConditionPathIsDirectory=!/var/state/config
 DefaultDependencies=no
@@ -11,7 +11,7 @@ Before=sysinit.target shutdown.target
 Type=oneshot
 ExecStart=mount /dev/disk/by-label/config /mnt
 ExecStart=mkdir /var/state/config
-ExecStart=cp /mnt/config.tar.gz /var/state/config/
+ExecStart=cp /mnt/config.tar /var/state/config/
 ExecStart=umount /mnt
 
 [Install]
