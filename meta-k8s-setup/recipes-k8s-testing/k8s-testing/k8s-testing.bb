@@ -14,7 +14,7 @@ inherit deploy
 do_compile(){
 	mkdir -p config-partition
 	tar -cvf config-partition/config.tar --transform 's,\(20-wired.network\),/etc/systemd/network/\1,' ../InitConfiguration.yaml ../20-wired.network
-	mkfs.ext4 -d config-partition test_config.ext4 1G
+	mkfs.ext4 -L config -d config-partition test_config.ext4 1M
 }
 
 do_deploy(){
