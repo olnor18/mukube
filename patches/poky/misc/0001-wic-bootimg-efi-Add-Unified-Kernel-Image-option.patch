@@ -1,9 +1,7 @@
-From df007db4f78901a206a2ad8b70e8428cbcb4bdda Mon Sep 17 00:00:00 2001
+From b0573f240525df561ddef6e47cb285b217d38487 Mon Sep 17 00:00:00 2001
 From: Kristian Klausen <kristian@klausen.dk>
-Date: Thu, 9 Sep 2021 15:53:01 +0200
-Subject: [PATCH v3] wic/bootimg-efi: Add Unified Kernel Image option
-To: openembedded-core@lists.openembedded.org
-Cc: richard.purdie@linuxfoundation.org
+Date: Tue, 28 Sep 2021 14:44:16 +0200
+Subject: [PATCH] wic/bootimg-efi: Add Unified Kernel Image option
 
 "A unified kernel image is a single EFI PE executable combining an EFI
 stub loader, a kernel image, an initramfs image, and the kernel command
@@ -30,18 +28,8 @@ config generation logic to boot the Unified Kernel Image.
 [2] https://systemd.io/BOOT_LOADER_SPECIFICATION/
 
 Signed-off-by: Kristian Klausen <kristian@klausen.dk>
+Signed-off-by: Richard Purdie <richard.purdie@linuxfoundation.org>
 ---
-V3:
-Update objcopy link to the newly added systemd-stub manpage
-Support specifying multiple initrds, which are then concatenated into
-a single initrd (useful for providing microcodes to the kernel)
-
-V2:
-Add os-release as dependency
-Pull os-release file from STAGING_DIR_HOST, so it doesn't need to be
-installed into the rootfs
-Add selftest
-
  meta-selftest/wic/test_efi_plugin.wks         |  6 ++
  meta/classes/image_types_wic.bbclass          |  5 +-
  meta/lib/oeqa/selftest/cases/wic.py           | 29 ++++++++
