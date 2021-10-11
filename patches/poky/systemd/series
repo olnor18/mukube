@@ -1,3 +1,4 @@
+0001-Revert-systemd-fix-CVE-2021-33910.patch
 systemd_247.6-249.3.patch
 0001-systemd-Add-repart-PACKAGECONFIG.patch
 0001-systemd-Add-homed-PACKAGECONFIG.patch
