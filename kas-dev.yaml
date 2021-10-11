@@ -6,3 +6,4 @@ target: mukube-dev-image
 local_conf_header:
   dev: |
     DM_VERITY_IMAGE = "mukube-dev-image"
+    QB_OPT_APPEND:append = " -drive file=${MUKUBE_CONFIG_PARTITION},format=raw,if=virtio"

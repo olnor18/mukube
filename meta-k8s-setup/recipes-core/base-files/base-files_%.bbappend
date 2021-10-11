@@ -2,7 +2,6 @@ FILESEXTRAPATHS:append := "${THISDIR}/${PN}:"
 
 SRC_URI += "file://50-volatile.conf \
             file://50-volatile-tpm.conf \
-            file://40-config.conf \
             file://crypttab \
             file://crypttab-tpm \
             file://systemd-repart.service.d \
@@ -13,7 +12,6 @@ SYSTEMD_SERVICE:${PN} += "${@bb.utils.contains('MACHINE_FEATURES', 'tpm2', 'stat
 do_install:append() {
 	install -d ${D}${datadir}/state
 	install -d ${D}${libdir}/repart.d
-	install -m 0644 ${WORKDIR}/40-config.conf ${D}${libdir}/repart.d/
 
 	ln -s /var/state/secureboot ${D}${datadir}/secureboot
 

@@ -3,6 +3,4 @@ part /boot --source bootimg-efi --sourceparams="loader=systemd-boot,create-unifi
 
 part / --source rawcopy --sourceparams="file=${IMGDEPLOYDIR}/${DM_VERITY_IMAGE}-${MACHINE}.${DM_VERITY_IMAGE_TYPE}.verity" --part-type 44479540-f297-41b2-9af7-d131d5f0458a --align 1024 --use-uuid
 
-part /config --source rawcopy --sourceparams="file=${MUKUBE_CONFIG_PARTITION}" --part-type 0FC63DAF-8483-4772-8E79-3D69D8477DE4 --label config --fstype ext4 --align 1024
-
 bootloader --ptable gpt --timeout=0 --append=""
