@@ -3,3 +3,4 @@
 0001-image_types_wic.bbclass-alphabetize-list-of-WICVARS.patch
 0001-wic-bootimg-efi-Add-Unified-Kernel-Image-option.patch
 0001-add-start-swtpm-script.patch
+0001-ovmf-add-TPM-PACKAGECONFIG-and-enable-if-tpm-is-in-M.patch
