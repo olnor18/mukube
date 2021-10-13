@@ -1,0 +1,25 @@
+From 37253e4860e6294b4f250841fb3287eb093d7f27 Mon Sep 17 00:00:00 2001
+From: skovbakke <78202835+skovbakke@users.noreply.github.com>
+Date: Mon, 11 Oct 2021 14:48:55 +0000
+Subject: [PATCH] cri-o remove containerd as RDEPENDS
+
+---
+ recipes-containers/cri-o/cri-o_git.bb | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/recipes-containers/cri-o/cri-o_git.bb b/recipes-containers/cri-o/cri-o_git.bb
+index 0ac5ddc..b340f67 100644
+--- a/recipes-containers/cri-o/cri-o_git.bb
++++ b/recipes-containers/cri-o/cri-o_git.bb
+@@ -47,7 +47,7 @@ PNBLACKLIST[cri-o] ?= "${@bb.utils.contains('BBFILE_COLLECTIONS', 'security', bb
+ 
+ PACKAGES =+ "${PN}-config"
+ 
+-RDEPENDS_${PN} += " virtual/containerd virtual/runc"
++RDEPENDS_${PN} += " virtual/runc"
+ RDEPENDS_${PN} += " e2fsprogs-mke2fs conmon util-linux iptables conntrack-tools"
+ 
+ inherit systemd
+-- 
+2.30.2
+
