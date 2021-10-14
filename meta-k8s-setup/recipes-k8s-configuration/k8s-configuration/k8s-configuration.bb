@@ -21,7 +21,7 @@ FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  /var/lib/skopeo \
                  "
 
-KUBERNETES_VERSION = "v1.20.7"
+KUBERNETES_VERSION = "v1.20.9"
 
 CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
                     k8s.gcr.io/kube-controller-manager:${KUBERNETES_VERSION} \
