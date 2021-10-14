@@ -10,3 +10,5 @@ do_install:append() {
 }
 FILES:${PN} += "/efi"
 RDEPENDS:${PN} += "packagegroup-base-vfat"
+
+RRECOMMENDS:${PN}:remove = "systemd-conf"
