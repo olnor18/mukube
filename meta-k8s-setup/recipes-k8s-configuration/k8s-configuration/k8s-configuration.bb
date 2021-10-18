@@ -27,13 +27,14 @@ FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
 
 KUBERNETES_VERSION = "v1.20.9"
 
+# The pause 3.6 image is used by the CRI and 3.2 for kubeadm's preflight checks
 CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
                     k8s.gcr.io/kube-controller-manager:${KUBERNETES_VERSION} \
                     k8s.gcr.io/kube-scheduler:${KUBERNETES_VERSION} \
                     k8s.gcr.io/kube-proxy:${KUBERNETES_VERSION} \
-                    k8s.gcr.io/pause:3.4.1 \
                     k8s.gcr.io/etcd:3.4.13-0 \
                     k8s.gcr.io/coredns:1.7.0 \
+                    k8s.gcr.io/pause:3.6 \
                     k8s.gcr.io/pause:3.2"
 
 inherit systemd
