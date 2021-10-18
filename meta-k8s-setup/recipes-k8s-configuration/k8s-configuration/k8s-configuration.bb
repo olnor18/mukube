@@ -69,8 +69,9 @@ do_install(){
 
     # Install container images for control plane
     install -d ${D}/var/lib/skopeo
+    echo '{}' > ${TMPDIR}/auth.json
     for image in ${CONTAINER_IMAGES}; do
-        skopeo sync --scoped --src docker --dest dir "${image}" ${D}/var/lib/skopeo
+        REGISTRY_AUTH_FILE=${TMPDIR}/auth.json skopeo sync --scoped --src docker --dest dir "${image}" ${D}/var/lib/skopeo
     done
     # Fix wrong owner/group due to pseudo apparently not working with skopeo (maybe because it is a Go program?)
     chown -R root:root ${D}/var/lib/skopeo
