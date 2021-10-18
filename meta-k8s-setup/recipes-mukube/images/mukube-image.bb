@@ -20,7 +20,6 @@ packagegroup-core-boot \
 tar \
 libseccomp \
 tzdata \
-podman \
 secure-boot-setup \
 intel-microcode \
 amd-microcode \
