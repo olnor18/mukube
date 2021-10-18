@@ -20,11 +20,11 @@ packagegroup-core-boot \
 tar \
 libseccomp \
 tzdata \
-podman \
 secure-boot-setup \
 intel-microcode \
 amd-microcode \
 helm \
+kernel-modules \
 " 
 
 # systemd only writes to the last console: https://github.com/systemd/systemd/issues/9899
