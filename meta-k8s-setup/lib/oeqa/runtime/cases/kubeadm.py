@@ -8,9 +8,6 @@ from os.path import isfile, join
 class KubeadmInitTest(OERuntimeTestCase):
 
     def test_kubeadm_init(self):
-        # Load container images for control-plane
-        (status, output) = self.target.run('for d in /var/lib/skopeo/*; do podman load -i $d; done')
-        self.assertEqual(status, 0, msg=output)
         # Create the cluster
         (status, output) = self.target.run('kubeadm init --config /InitConfiguration.yaml')
         self.assertEqual(status, 0, msg=output)

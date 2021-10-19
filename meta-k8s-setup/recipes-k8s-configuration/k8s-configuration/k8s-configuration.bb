@@ -2,6 +2,7 @@ SUMMARY = "Write configuration files needed for Kubernetes and CRI-O"
 DESCRIPTION = ""
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${WORKDIR}/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
+RDEPENDS:${PN} = "skopeo"
 DEPENDS = "skopeo-native"
 
 SRC_URI += "file://COPYING.MIT \
@@ -13,12 +14,14 @@ SRC_URI += "file://COPYING.MIT \
             file://crio.conf \
             file://crio.service \
             file://copy-config-to-state.service \
-            file://k8s-configuration.service"
+            file://k8s-configuration.service \
+            file://copy-images-to-containers-storage.service"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
                  InitConfiguration.yaml \
                  /var/lib/skopeo \
+                 ${systemd_unitdir}/system/ \
                  "
 
 KUBERNETES_VERSION = "v1.20.9"
@@ -35,7 +38,7 @@ CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
 inherit systemd
 
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
-SYSTEMD_SERVICE:${PN} = "k8s-configuration.service copy-config-to-state.service"
+SYSTEMD_SERVICE:${PN} = "k8s-configuration.service copy-config-to-state.service copy-images-to-containers-storage.service"
 
 do_install(){
     install -d ${D}/etc/
@@ -66,9 +69,13 @@ do_install(){
 
     # Install container images for control plane
     install -d ${D}/var/lib/skopeo
+    echo '{}' > ${TMPDIR}/auth.json
     for image in ${CONTAINER_IMAGES}; do
-        skopeo sync --src docker --dest dir "${image}" ${D}/var/lib/skopeo
+        REGISTRY_AUTH_FILE=${TMPDIR}/auth.json skopeo sync --scoped --src docker --dest dir "${image}" ${D}/var/lib/skopeo
     done
     # Fix wrong owner/group due to pseudo apparently not working with skopeo (maybe because it is a Go program?)
     chown -R root:root ${D}/var/lib/skopeo
+
+    install -d ${D}${systemd_unitdir}/system
+    install -m 0644 ${WORKDIR}/copy-images-to-containers-storage.service ${D}${systemd_unitdir}/system/
 }
