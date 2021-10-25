@@ -35,7 +35,9 @@ CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
                     k8s.gcr.io/etcd:3.4.13-0 \
                     k8s.gcr.io/coredns:1.7.0 \
                     k8s.gcr.io/pause:3.6 \
-                    k8s.gcr.io/pause:3.2"
+                    k8s.gcr.io/pause:3.2 \
+                    docker.io/library/haproxy:2.1.4 \
+                    docker.io/osixia/keepalived:2.0.20"
 
 inherit systemd
 
