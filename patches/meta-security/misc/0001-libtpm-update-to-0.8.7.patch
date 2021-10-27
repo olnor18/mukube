@@ -1,10 +1,10 @@
-From b1d2e196759b385d8ef9182f51aa46831ec23078 Mon Sep 17 00:00:00 2001
+From 36739546691c57ed8956e662de7e0c7247d4b9b8 Mon Sep 17 00:00:00 2001
 From: Kristian Klausen <kristian@klausen.dk>
-Date: Mon, 27 Sep 2021 10:22:14 +0200
-Subject: [meta-security][PATCH] libtpm: update to 0.8.7
-To: yocto@lists.yoctoproject.org
+Date: Mon, 27 Sep 2021 13:07:03 +0200
+Subject: [PATCH] libtpm: update to 0.8.7
 
 Signed-off-by: Kristian Klausen <kristian@klausen.dk>
+Signed-off-by: Armin Kuster <akuster808@gmail.com>
 ---
  .../recipes-tpm/libtpm/{libtpm_0.8.2.bb => libtpm_0.8.7.bb}     | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -27,5 +27,5 @@ index 9784aa1..95ba5c5 100644
  
  PE = "1"
 -- 
-2.25.1
+2.33.1
 

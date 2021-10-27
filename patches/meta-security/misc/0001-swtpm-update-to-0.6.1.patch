@@ -1,8 +1,7 @@
-From 9a9d085e93a9299334a3d81fddd34c21ee854b95 Mon Sep 17 00:00:00 2001
+From 01bdc2918cfe74da7d6615711d5544b505429ddc Mon Sep 17 00:00:00 2001
 From: Kristian Klausen <kristian@klausen.dk>
-Date: Mon, 27 Sep 2021 11:57:08 +0200
-Subject: [meta-security][PATCH] swtpm: update to 0.6.1
-To: yocto@lists.yoctoproject.org
+Date: Sat, 2 Oct 2021 20:37:38 +0200
+Subject: [PATCH] swtpm: update to 0.6.1
 
 swtpm no longer depends on Python[1] so the dependencies have been
 removed.
@@ -17,11 +16,12 @@ required in the past by swtpm_setup.sh (<0.4.0)[2].
 [2] https://github.com/stefanberger/swtpm/commit/eee8cb5dfb13f87140dddda38f65bf61aff19508
 
 Signed-off-by: Kristian Klausen <kristian@klausen.dk>
+Signed-off-by: Armin Kuster <akuster808@gmail.com>
 ---
  .../swtpm/swtpm-wrappers-native.bb            | 12 ++++------
  .../swtpm/{swtpm_0.5.2.bb => swtpm_0.6.1.bb}  | 23 ++++++++-----------
  2 files changed, 14 insertions(+), 21 deletions(-)
- rename meta-tpm/recipes-tpm/swtpm/{swtpm_0.5.2.bb => swtpm_0.6.1.bb} (72%)
+ rename meta-tpm/recipes-tpm/swtpm/{swtpm_0.5.2.bb => swtpm_0.6.1.bb} (69%)
 
 diff --git a/meta-tpm/recipes-tpm/swtpm/swtpm-wrappers-native.bb b/meta-tpm/recipes-tpm/swtpm/swtpm-wrappers-native.bb
 index 644f3ac..bb93374 100644
@@ -63,10 +63,10 @@ index 644f3ac..bb93374 100644
                  cat >${WORKDIR}/${exe}_oe.sh <<EOF
  #! /bin/sh
 diff --git a/meta-tpm/recipes-tpm/swtpm/swtpm_0.5.2.bb b/meta-tpm/recipes-tpm/swtpm/swtpm_0.6.1.bb
-similarity index 72%
+similarity index 69%
 rename from meta-tpm/recipes-tpm/swtpm/swtpm_0.5.2.bb
 rename to meta-tpm/recipes-tpm/swtpm/swtpm_0.6.1.bb
-index 912e939..807c02b 100644
+index 912e939..c7fc131 100644
 --- a/meta-tpm/recipes-tpm/swtpm/swtpm_0.5.2.bb
 +++ b/meta-tpm/recipes-tpm/swtpm/swtpm_0.6.1.bb
 @@ -3,14 +3,11 @@ LICENSE = "BSD-3-Clause"
@@ -74,8 +74,8 @@ index 912e939..807c02b 100644
  SECTION = "apps"
  
 -DEPENDS = "libtasn1 coreutils-native expect socat glib-2.0 net-tools-native libtpm libtpm-native"
-+# coreutils-native and net-tools-native are reportedly only required for the tests
-+DEPENDS = "libtasn1 coreutils-native expect socat glib-2.0 net-tools-native libtpm json-glib"
++# expect-native, socat-native, coreutils-native and net-tools-native are reportedly only required for the tests
++DEPENDS = "libtasn1 coreutils-native expect-native socat-native glib-2.0 net-tools-native libtpm json-glib"
  
 -# configure checks for the tools already during compilation and
 -# then swtpm_setup needs them at runtime
@@ -126,5 +126,5 @@ index 912e939..807c02b 100644
  
  BBCLASSEXTEND = "native nativesdk"
 -- 
-2.25.1
+2.33.1
 
