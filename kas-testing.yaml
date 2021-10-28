@@ -7,6 +7,6 @@ target: mukube-test-image
 local_conf_header:
   testing: |
     IMAGE_CLASSES += "testimage"
-    TEST_SUITES = " kubeadm config" 
+    TEST_SUITES = "bootservice kubeadm config " 
     DM_VERITY_IMAGE = "mukube-test-image"
     QB_OPT_APPEND:append = " -drive file=${MUKUBE_CONFIG_PARTITION},format=raw,if=virtio"
