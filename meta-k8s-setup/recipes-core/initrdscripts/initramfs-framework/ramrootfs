@@ -12,7 +12,7 @@ ramrootfs_run() {
 		size="$((size/100*90))"
 		zram_dev="$(zramctl -f -s "${size}KiB")"
 		mkfs.ext4 -O ^has_journal "$zram_dev"
-		mount "$zram_dev" "$ROOTFS_DIR"
+		mount -o discard "$zram_dev" "$ROOTFS_DIR"
 		cp -a "$ROOTFS_DIR.org/." "$ROOTFS_DIR"
 
 		# Needed for https://www.freedesktop.org/software/systemd/man/systemd-gpt-auto-generator.html
