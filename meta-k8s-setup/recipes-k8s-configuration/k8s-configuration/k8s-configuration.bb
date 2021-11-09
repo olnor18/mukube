@@ -37,7 +37,9 @@ CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
                     k8s.gcr.io/pause:3.6 \
                     k8s.gcr.io/pause:3.2 \
                     docker.io/library/haproxy:2.1.4 \
-                    docker.io/osixia/keepalived:2.0.20"
+                    docker.io/osixia/keepalived:2.0.20 \
+                    docker.io/weaveworks/weave-kube:2.8.1 \
+                    docker.io/weaveworks/weave-npc:2.8.1"
 
 inherit systemd
 
