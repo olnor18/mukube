@@ -83,3 +83,9 @@ Notice that swtpm exits when the virtual machine turns off, and has to be relaun
 
 ## Building a cluster
 We have a target for building multiple `wic` image files. The kas file to use is `kas-cluster.yaml`. 
+
+## VMware
+The image can be converted to a format compatible with VMware EXSi (tested with EXSi 7.0.2) with this command:
+```sh
+$ qemu-img convert -f raw -O vmdk -o adapter_type=lsilogic,subformat=monolithicFlat,compat6 mukube-dev-image-mukube.wic mukube-dev-image-mukube.vmdk
+```
