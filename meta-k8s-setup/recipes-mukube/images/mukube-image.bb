@@ -24,6 +24,7 @@ secure-boot-setup \
 intel-microcode \
 amd-microcode \
 helm \
+gptfdisk \
 kernel-modules \
 " 
 
