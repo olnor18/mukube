@@ -16,6 +16,7 @@ SRC_URI += "file://COPYING.MIT \
             file://copy-config-to-state.service \
             file://k8s-configuration.service \
             file://copy-images-to-containers-storage.service \
+            file://zap-ceph-disks.service \
             file://boot.service"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
@@ -45,7 +46,7 @@ CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
 inherit systemd
 
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
-SYSTEMD_SERVICE:${PN} = "k8s-configuration.service copy-config-to-state.service copy-images-to-containers-storage.service boot.service"
+SYSTEMD_SERVICE:${PN} = "k8s-configuration.service copy-config-to-state.service copy-images-to-containers-storage.service zap-ceph-disks.service boot.service"
 
 do_install(){
     install -d ${D}/etc/
@@ -88,4 +89,7 @@ do_install(){
 
     # Install the boot service
     install -m 0644 ${WORKDIR}/boot.service ${D}${systemd_unitdir}/system/
+
+    # Install Ceph zap
+    install -m 0644 ${WORKDIR}/zap-ceph-disks.service ${D}${systemd_unitdir}/system/
 }

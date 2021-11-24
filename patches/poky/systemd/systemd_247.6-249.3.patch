@@ -264,7 +264,7 @@ index 7d3b3064ba..05341724f4 100644
  
 -SRCREV = "17472dca0160cbe7b807ca648475fd70d0d62fe5"
 -SRCBRANCH = "v247-stable"
--SRC_URI = "git://github.com/systemd/systemd-stable.git;protocol=git;branch=${SRCBRANCH}"
+-SRC_URI = "git://github.com/systemd/systemd-stable.git;protocol=https;branch=${SRCBRANCH}"
 +SRCREV = "090378dcb1de5ca66900503210e85d63075fa70a"
 +SRCBRANCH = "v249-stable"
 +SRC_URI = "git://github.com/systemd/systemd-stable.git;protocol=git;branch=${SRCBRANCH} \
