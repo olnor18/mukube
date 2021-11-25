@@ -26,6 +26,8 @@ amd-microcode \
 helm \
 gptfdisk \
 kernel-modules \
+openssh-ssh \
+openssh-sftp \
 " 
 
 # systemd only writes to the last console: https://github.com/systemd/systemd/issues/9899
