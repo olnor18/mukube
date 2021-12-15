@@ -1,6 +1,1 @@
-0001-skopeo-bump-to-1.2.3-dev.patch
-0001-skope-update-to-1.3.x.patch
-0001-skopeo-add-native-and-nativesdk-support.patch
-0001-skopeo-fix-native-skopeo-failed-if-no-libdevmapper.s.patch
-0001-skopeo-switch-to-main-branch.patch
-0001-cri-o-remove-containerd-as-RDEPENDS.patch
+0001-CRI-O-Remove-containerd-as-RDEPENDS.patch

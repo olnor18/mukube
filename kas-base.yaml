@@ -12,22 +12,15 @@ repos:
       meta-k8s-setup:
   poky:
     url: https://git.yoctoproject.org/git/poky
-    refspec: hardknott
+    refspec: honister
     layers:
       meta:
       meta-poky:
       meta-skeleton:
       meta-yocto-bsp:
-    patches:
-      systemd:
-        repo: mukube
-        path: patches/poky/systemd/
-      misc:
-        repo: mukube
-        path: patches/poky/misc/
   meta-openembedded:
     url: https://github.com/openembedded/meta-openembedded.git
-    refspec: hardknott
+    refspec: honister
     layers:
       meta-oe:  
       meta-filesystems:
@@ -36,27 +29,23 @@ repos:
       meta-perl:
   meta-virtualization:
     url: https://git.yoctoproject.org/git/meta-virtualization
-    refspec: hardknott 
+    refspec: honister
     patches:
       misc:
         repo: mukube
         path: patches/meta-virtualization/misc/
   meta-security: 
     url: https://git.yoctoproject.org/cgit/cgit.cgi/meta-security/
-    refspec: hardknott
+    refspec: honister
     layers:
       .:
       meta-tpm:
-    patches:
-      misc:
-        repo: mukube
-        path: patches/meta-security/misc/
   meta-selinux:
     url: https://git.yoctoproject.org/cgit/cgit.cgi/meta-selinux/
-    refspec: hardknott
+    refspec: honister
   meta-intel:
     url: https://git.yoctoproject.org/git/meta-intel/
-    refspec: hardknott
+    refspec: honister
 local_conf_header:
   meta-k8s-setup: |
     EXTRA_IMAGEDEPENDS += "ovmf qemu-system-native qemu-helper-native swtpm-wrappers-native"
