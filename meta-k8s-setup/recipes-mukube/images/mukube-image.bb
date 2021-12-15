@@ -15,7 +15,6 @@ IMAGE_INSTALL = "\
 	conntrack-tools \
 	k8s-configuration \
 	cri-o \
-	libhugetlbfs \
 	packagegroup-core-boot \
 	tar \
 	libseccomp \
