@@ -8,6 +8,6 @@ do_install:append() {
 
 PACKAGES += "initramfs-module-ramrootfs"
 
-SUMMARY_initramfs-module-ramrootfs = "initramfs dm-verity rootfs support"
-RDEPENDS_initramfs-module-ramrootfs = "${PN}-base util-linux-zramctl e2fsprogs-mke2fs"
-FILES_initramfs-module-ramrootfs = "/init.d/91-ramrootfs"
+SUMMARY:initramfs-module-ramrootfs = "initramfs dm-verity rootfs support"
+RDEPENDS:initramfs-module-ramrootfs = "${PN}-base util-linux-zramctl e2fsprogs-mke2fs"
+FILES:initramfs-module-ramrootfs = "/init.d/91-ramrootfs"
