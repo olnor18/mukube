@@ -72,7 +72,7 @@ bblayers_conf_header:
     BBPATH = "${TOPDIR}"
     BBFILES ?= ""
 
-    DISTRO_FEATURES += "systemd virtualization k8s ram aufs seccomp ipv6"
+    DISTRO_FEATURES += "systemd virtualization tpm2 security k8s ram aufs seccomp ipv6"
     DISTRO_FEATURES_BACKFILL_CONSIDERED = "sysvinit"
     VIRTUAL-RUNTIME_init_manager = "systemd"
     VIRTUAL-RUNTIME_initscripts = ""
