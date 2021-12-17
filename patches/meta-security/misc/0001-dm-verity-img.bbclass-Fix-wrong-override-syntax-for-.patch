@@ -1,0 +1,32 @@
+From caf5732f6caca676ae12e95de75af71fa0a53961 Mon Sep 17 00:00:00 2001
+From: Kristian Klausen <kristian@klausen.dk>
+Date: Fri, 17 Dec 2021 10:55:43 +0100
+Subject: [PATCH] dm-verity-img.bbclass: Fix wrong override syntax for
+ CONVERSION_DEPENDS
+
+CONVERSION_DEPENDS hasn't been converted to the new syntax.
+
+Fixes: a23ceef ("dm-verity-img.bbclass: more overided fixups")
+
+Signed-off-by: Kristian Klausen <kristian@klausen.dk>
+Signed-off-by: Armin Kuster <akuster808@gmail.com>
+---
+ classes/dm-verity-img.bbclass | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/classes/dm-verity-img.bbclass b/classes/dm-verity-img.bbclass
+index 0b6d053..93f667d 100644
+--- a/classes/dm-verity-img.bbclass
++++ b/classes/dm-verity-img.bbclass
+@@ -67,7 +67,7 @@ VERITY_TYPES = "ext2.verity ext3.verity ext4.verity btrfs.verity"
+ IMAGE_TYPES += "${VERITY_TYPES}"
+ CONVERSIONTYPES += "verity"
+ CONVERSION_CMD:verity = "verity_setup ${type}"
+-CONVERSION_DEPENDS:verity = "cryptsetup-native"
++CONVERSION_DEPENDS_verity = "cryptsetup-native"
+ 
+ python __anonymous() {
+     verity_image = d.getVar('DM_VERITY_IMAGE')
+-- 
+2.30.2
+

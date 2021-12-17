@@ -40,6 +40,10 @@ repos:
     layers:
       .:
       meta-tpm:
+    patches:
+      misc:
+        repo: mukube
+        path: patches/meta-security/misc/
   meta-selinux:
     url: https://git.yoctoproject.org/cgit/cgit.cgi/meta-selinux/
     refspec: honister
