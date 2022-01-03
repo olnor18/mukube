@@ -1,3 +1,0 @@
-
-# This is a configuration file, tells dejagnu to test mukube.
-set tool mukube
