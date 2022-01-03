@@ -1,0 +1,18 @@
+[Unit]
+Description=copy config.tar to the encrypted state partition
+RequiresMountsFor=/var/state
+ConditionPathIsDirectory=!/var/state/config
+DefaultDependencies=no
+Conflicts=shutdown.target
+After=local-fs.target
+Before=sysinit.target shutdown.target
+
+[Service]
+Type=oneshot
+ExecStart=mount /dev/disk/by-label/config /mnt
+ExecStart=mkdir /var/state/config
+ExecStart=cp /mnt/config.tar /var/state/config/
+ExecStart=umount /mnt
+
+[Install]
+WantedBy=sysinit.target

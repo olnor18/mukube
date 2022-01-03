@@ -1,0 +1,3 @@
+define KFEATURE_DESCRIPTION "Enable IPSET used by weave-net"
+
+kconf non-hardware ip-set.cfg

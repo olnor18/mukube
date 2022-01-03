@@ -1,0 +1,18 @@
+[Unit]
+Description=Create secure boot keys and enroll them
+ConditionFileNotEmpty=!/sys/firmware/efi/efivars/PK-8be4df61-93ca-11d2-aa0d-00e098032b8c
+DefaultDependencies=no
+Conflicts=shutdown.target
+After=local-fs.target
+Before=sysinit.target shutdown.target
+SuccessAction=reboot
+
+[Service]
+Type=oneshot
+ExecStart=sbctl create-keys
+ExecStart=sbctl enroll-keys
+ExecStart=sbctl sign /efi/EFI/BOOT/bootx64.efi
+ExecStart=sbctl sign /efi/EFI/Linux/linux.efi
+
+[Install]
+WantedBy=sysinit.target

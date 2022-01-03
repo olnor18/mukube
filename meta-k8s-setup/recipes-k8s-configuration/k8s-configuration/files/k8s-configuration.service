@@ -1,0 +1,15 @@
+[Unit]
+Description=service that unpacks the configuration files
+RequiresMountsFor=/var/state
+ConditionPathIsDirectory=/var/state/config
+DefaultDependencies=no
+Conflicts=shutdown.target
+After=local-fs.target copy-config-to-state.service
+Before=sysinit.target shutdown.target
+
+[Service]
+ExecStart=tar -xf /var/state/config/config.tar --no-same-owner -v -C /
+Type=oneshot
+
+[Install]
+WantedBy=sysinit.target

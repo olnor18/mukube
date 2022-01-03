@@ -1,0 +1,89 @@
+header:
+  version: 10
+  includes:
+  - kas-local.yaml
+machine: mukube
+distro: poky
+target: mukube-image
+repos:
+  mukube:
+    layers:
+      meta-secure-boot:
+      meta-k8s-setup:
+  poky:
+    url: https://git.yoctoproject.org/git/poky
+    refspec: hardknott
+    layers:
+      meta:
+      meta-poky:
+      meta-skeleton:
+      meta-yocto-bsp:
+    patches:
+      systemd:
+        repo: mukube
+        path: patches/poky/systemd/
+      misc:
+        repo: mukube
+        path: patches/poky/misc/
+  meta-openembedded:
+    url: https://github.com/openembedded/meta-openembedded.git
+    refspec: hardknott
+    layers:
+      meta-oe:  
+      meta-filesystems:
+      meta-python:
+      meta-networking:
+      meta-perl:
+  meta-virtualization:
+    url: https://git.yoctoproject.org/git/meta-virtualization
+    refspec: hardknott 
+    patches:
+      misc:
+        repo: mukube
+        path: patches/meta-virtualization/misc/
+  meta-security: 
+    url: https://git.yoctoproject.org/cgit/cgit.cgi/meta-security/
+    refspec: hardknott
+    layers:
+      .:
+      meta-tpm:
+    patches:
+      misc:
+        repo: mukube
+        path: patches/meta-security/misc/
+  meta-selinux:
+    url: https://git.yoctoproject.org/cgit/cgit.cgi/meta-selinux/
+    refspec: hardknott
+  meta-intel:
+    url: https://git.yoctoproject.org/git/meta-intel/
+    refspec: hardknott
+local_conf_header:
+  meta-k8s-setup: |
+    EXTRA_IMAGEDEPENDS += "ovmf qemu-system-native qemu-helper-native swtpm-wrappers-native"
+    QB_MEM = "6G"
+    QB_OPT_APPEND:append = " -smp 4"
+    QB_MACHINE = "-machine accel=kvm:tcg"
+    QB_DEFAULT_FSTYPE = "wic"
+    EFI_PROVIDER = "systemd-boot"
+
+    IMAGE_FSTYPES += "wic"
+    IMAGE_CLASSES += "dm-verity-img"
+    WKS_FILE = "mukube.wks.in"
+    DM_VERITY_IMAGE ?= "mukube-image"
+    DM_VERITY_IMAGE_TYPE = "ext4"
+    INITRAMFS_IMAGE = "dm-verity-image-initramfs"
+    INITRAMFS_FSTYPES = "cpio.gz"
+
+    # 1GiB
+    WIC_CREATE_EXTRA_ARGS = "--extra-space 1073741824"
+
+bblayers_conf_header:
+  meta-k8s-setup: |
+    POKY_BBLAYERS_CONF_VERSION = "2"
+    BBPATH = "${TOPDIR}"
+    BBFILES ?= ""
+
+    DISTRO_FEATURES += "systemd virtualization k8s ram aufs seccomp"
+    DISTRO_FEATURES_BACKFILL_CONSIDERED = "sysvinit"
+    VIRTUAL-RUNTIME_init_manager = "systemd"
+    VIRTUAL-RUNTIME_initscripts = ""

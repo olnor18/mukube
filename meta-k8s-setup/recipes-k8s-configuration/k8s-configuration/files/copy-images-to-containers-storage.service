@@ -1,0 +1,14 @@
+[Unit]
+Description=Copy images to containers-storage
+DefaultDependencies=no
+Conflicts=shutdown.target
+After=local-fs.target
+Before=sysinit.target shutdown.target
+
+[Service]
+Type=oneshot
+ExecStart=ash -c 'for i in $(find /var/lib/skopeo -name manifest.json | sed "s:/manifest.json::"); do skopeo copy dir:$i containers-storage:$${i/\\/var\\/lib\\/skopeo\\/}; done'
+ExecStart=rm -r /var/lib/skopeo
+
+[Install]
+WantedBy=sysinit.target

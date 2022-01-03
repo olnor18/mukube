@@ -1,0 +1,109 @@
+From b00651cf433012dea0c32db99af7cd0c542ea066 Mon Sep 17 00:00:00 2001
+From: Kristian Klausen <kristian@klausen.dk>
+Date: Mon, 30 Aug 2021 09:55:41 +0200
+Subject: [PATCH] gpt-auto-generator: Use volatile-root by default and
+ automatic logic as fallback
+
+Previously volatile-root was only checked if "/" wasn't backed by a
+block device, but the block device isn't necessarily original root block
+device (ex: if the rootfs is copied to a ext4 fs backed by zram in the
+initramfs), so we always want volatile-root checked.
+
+So shuffle the code around so volatile-root is checked first and
+fallback to the automatic logic.
+
+Fix #20557
+---
+ man/systemd-gpt-auto-generator.xml          |  5 ++
+ src/gpt-auto-generator/gpt-auto-generator.c | 53 ++++++++++-----------
+ 2 files changed, 29 insertions(+), 29 deletions(-)
+
+diff --git a/man/systemd-gpt-auto-generator.xml b/man/systemd-gpt-auto-generator.xml
+index 798faa59c8..a67eedb51d 100644
+--- a/man/systemd-gpt-auto-generator.xml
++++ b/man/systemd-gpt-auto-generator.xml
+@@ -228,6 +228,11 @@
+       For more information, see <citerefentry><refentrytitle>bootup</refentrytitle><manvolnum>7</manvolnum></citerefentry>.
+     </para>
+ 
++    <para>The root partition can be specified by symlinking <filename>/run/systemd/volatile-root</filename>
++    to <filename>/dev/block/$major:$minor</filename>. This is especially useful if the root mount has been
++    replaced by some form of volatile file system (overlayfs).
++    </para>
++
+     <para>Mount and automount units for the EFI System Partition (ESP) are generated on EFI systems. The ESP
+     is mounted to <filename>/boot/</filename> (except if an Extended Boot Loader partition exists, see
+     below), unless a mount point directory <filename>/efi/</filename> exists, in which case it is mounted
+diff --git a/src/gpt-auto-generator/gpt-auto-generator.c b/src/gpt-auto-generator/gpt-auto-generator.c
+index f5346f49ad..573fcf0d19 100644
+--- a/src/gpt-auto-generator/gpt-auto-generator.c
++++ b/src/gpt-auto-generator/gpt-auto-generator.c
+@@ -764,41 +764,36 @@ static int enumerate_partitions(dev_t devnum) {
+ }
+ 
+ static int add_mounts(void) {
+-        dev_t devno;
++        _cleanup_free_ char *p = NULL;
+         int r;
++        dev_t devno;
+ 
+-        r = get_block_device_harder("/", &devno);
+-        if (r == -EUCLEAN)
+-                return btrfs_log_dev_root(LOG_ERR, r, "root file system");
+-        if (r < 0)
+-                return log_error_errno(r, "Failed to determine block device of root file system: %m");
+-        if (r == 0) { /* Not backed by block device */
+-                r = get_block_device_harder("/usr", &devno);
++        /* If the root mount has been replaced by some form of volatile file system (overlayfs), the
++         * original root block device node is symlinked in /run/systemd/volatile-root. Let's read that
++         * here. */
++        r = readlink_malloc("/run/systemd/volatile-root", &p);
++        if (r == -ENOENT) { /* volatile-root not found */
++                r = get_block_device_harder("/", &devno);
+                 if (r == -EUCLEAN)
+-                        return btrfs_log_dev_root(LOG_ERR, r, "/usr");
++                        return btrfs_log_dev_root(LOG_ERR, r, "root file system");
+                 if (r < 0)
+-                        return log_error_errno(r, "Failed to determine block device of /usr file system: %m");
+-                if (r == 0) {
+-                        _cleanup_free_ char *p = NULL;
+-                        mode_t m;
+-
+-                        /* If the root mount has been replaced by some form of volatile file system (overlayfs), the
+-                         * original root block device node is symlinked in /run/systemd/volatile-root. Let's read that
+-                         * here. */
+-                        r = readlink_malloc("/run/systemd/volatile-root", &p);
+-                        if (r == -ENOENT) {
+-                                log_debug("Neither root nor /usr file system are on a (single) block device.");
+-                                return 0;
+-                        }
++                        return log_error_errno(r, "Failed to determine block device of root file system: %m");
++                if (r == 0) { /* Not backed by block device */
++                        r = get_block_device_harder("/usr", &devno);
++                        if (r == -EUCLEAN)
++                                return btrfs_log_dev_root(LOG_ERR, r, "/usr");
+                         if (r < 0)
+-                                return log_error_errno(r, "Failed to read symlink /run/systemd/volatile-root: %m");
+-
+-                        r = device_path_parse_major_minor(p, &m, &devno);
+-                        if (r < 0)
+-                                return log_error_errno(r, "Failed to parse major/minor device node: %m");
+-                        if (!S_ISBLK(m))
+-                                return log_error_errno(SYNTHETIC_ERRNO(ENOTBLK), "Volatile root device is of wrong type.");
++                                return log_error_errno(r, "Failed to determine block device of /usr file system: %m");
+                 }
++        } else if (r < 0)
++                return log_error_errno(r, "Failed to read symlink /run/systemd/volatile-root: %m");
++        else {
++                mode_t m;
++                r = device_path_parse_major_minor(p, &m, &devno);
++                if (r < 0)
++                        return log_error_errno(r, "Failed to parse major/minor device node: %m");
++                if (!S_ISBLK(m))
++                        return log_error_errno(SYNTHETIC_ERRNO(ENOTBLK), "Volatile root device is of wrong type.");
+         }
+ 
+         return enumerate_partitions(devno);
+-- 
+2.25.1
+
