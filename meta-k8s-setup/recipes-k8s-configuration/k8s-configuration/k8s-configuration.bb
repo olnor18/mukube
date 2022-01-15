@@ -26,17 +26,17 @@ FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  ${systemd_unitdir}/system/ \
                  "
 
-KUBERNETES_VERSION = "v1.20.9"
+KUBERNETES_VERSION = "v1.22.1"
 
-# The pause 3.6 image is used by the CRI and 3.2 for kubeadm's preflight checks
+# The pause 3.6 image is used by the CRI and 3.5 for kubeadm's preflight checks
 CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
                     k8s.gcr.io/kube-controller-manager:${KUBERNETES_VERSION} \
                     k8s.gcr.io/kube-scheduler:${KUBERNETES_VERSION} \
                     k8s.gcr.io/kube-proxy:${KUBERNETES_VERSION} \
-                    k8s.gcr.io/etcd:3.4.13-0 \
-                    k8s.gcr.io/coredns:1.7.0 \
+                    k8s.gcr.io/etcd:3.5.0-0 \
+                    k8s.gcr.io/coredns/coredns:v1.8.4 \
                     k8s.gcr.io/pause:3.6 \
-                    k8s.gcr.io/pause:3.2 \
+                    k8s.gcr.io/pause:3.5 \
                     docker.io/library/haproxy:2.1.4 \
                     docker.io/osixia/keepalived:2.0.20 \
                     docker.io/weaveworks/weave-kube:2.8.1 \
