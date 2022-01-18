@@ -30,6 +30,6 @@ IMAGE_INSTALL = "\
 	"
 
 # systemd only writes to the last console: https://github.com/systemd/systemd/issues/9899
-APPEND += "random.trust_cpu=on hw_rng_model=virtio systemd.legacy_systemd_cgroup_controller=yes console=tty0 console=ttyS0,115200"
+APPEND += "random.trust_cpu=on hw_rng_model=virtio console=tty0 console=ttyS0,115200"
 
 IMAGE_FEATURES = ""
