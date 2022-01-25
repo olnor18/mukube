@@ -30,10 +30,6 @@ repos:
   meta-virtualization:
     url: https://git.yoctoproject.org/git/meta-virtualization
     refspec: honister
-    patches:
-      misc:
-        repo: mukube
-        path: patches/meta-virtualization/misc/
   meta-security: 
     url: https://git.yoctoproject.org/cgit/cgit.cgi/meta-security/
     refspec: honister
