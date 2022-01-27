@@ -31,7 +31,7 @@ repos:
     url: https://git.yoctoproject.org/git/meta-virtualization
     refspec: honister
   meta-security: 
-    url: https://git.yoctoproject.org/cgit/cgit.cgi/meta-security/
+    url: https://git.yoctoproject.org/git/meta-security
     refspec: honister
     layers:
       .:
@@ -41,7 +41,7 @@ repos:
         repo: mukube
         path: patches/meta-security/misc/
   meta-selinux:
-    url: https://git.yoctoproject.org/cgit/cgit.cgi/meta-selinux/
+    url: https://git.yoctoproject.org/git/meta-selinux
     refspec: honister
   meta-intel:
     url: https://git.yoctoproject.org/git/meta-intel/
