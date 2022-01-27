@@ -4,7 +4,7 @@ HOMEPAGE = "http://www.amd.com/"
 LICENSE = "AMD-Microcode-License"
 LIC_FILES_CHKSUM = "file://LICENSE.amd-ucode;md5=3c5399dc9148d7f0e1f41e34b69cf14f"
 
-SRC_URI = "git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git;protocol=https"
+SRC_URI = "git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git;branch=main;protocol=https"
 SRCREV = "d526e044bddaa2c2ad855c7296147e49be0ab03c"
 
 S = "${WORKDIR}/git"

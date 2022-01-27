@@ -5,14 +5,14 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 SRC_URI += "file://InitConfiguration.yaml \
-			file://boot.sh \
+            file://boot.sh \
             file://20-wired.network"
 
 DEPENDS = "e2fsprogs-native"
 
-FILES_${PN} += "/boot.sh"
+FILES:${PN} += "/boot.sh"
 
-RDEPENDS_${PN} += "bash"
+RDEPENDS:${PN} += "bash"
 
 inherit deploy
 
