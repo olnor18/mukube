@@ -17,7 +17,8 @@ SRC_URI += "file://COPYING.MIT \
             file://k8s-configuration.service \
             file://copy-images-to-containers-storage.service \
             file://zap-ceph-disks.service \
-            file://boot.service"
+            file://boot.service \
+            file://90-override.conf"
 
 FILES_${PN} += " /proc/sys/net/ipv4/ip_forward \
                  crictl.yaml \
@@ -39,8 +40,8 @@ CONTAINER_IMAGES = "k8s.gcr.io/kube-apiserver:${KUBERNETES_VERSION} \
                     k8s.gcr.io/pause:3.5 \
                     docker.io/library/haproxy:2.1.4 \
                     docker.io/osixia/keepalived:2.0.20 \
-                    docker.io/weaveworks/weave-kube:2.8.1 \
-                    docker.io/weaveworks/weave-npc:2.8.1 \
+                    quay.io/cilium/cilium:v1.11.1 \
+                    quay.io/cilium/operator-generic:v1.11.1 \
                     docker.io/library/haproxy:2.4.8-alpine"
 
 inherit systemd
@@ -92,4 +93,8 @@ do_install(){
 
     # Install Ceph zap
     install -m 0644 ${WORKDIR}/zap-ceph-disks.service ${D}${systemd_unitdir}/system/
+
+    # Install 90-override.conf
+    install -d ${D}${sysconfdir}/sysctl.d/
+    install -m 0644 ${WORKDIR}/90-override.conf ${D}${sysconfdir}/sysctl.d/
 }
