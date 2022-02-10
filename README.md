@@ -6,6 +6,7 @@ The aim of the project is to build a minimal Linux distribution capable of runni
 * Create a folder for the build, e.g. `~/yocto`
 * Clone the repository into this folder, e.g. `~/yocto/mukube`
 * Install [`kas`](https://kas.readthedocs.io/en/latest/userguide.html#dependencies-installation) and create a `kas-local.yaml` file. A guide to configuring kas-local.yaml can be found in [local configurations for kas-local.yaml](#local-configurations-in-kas-localyaml).
+* Make sure you can run yocto by installing the [required packages](https://docs.yoctoproject.org/ref-manual/system-requirements.html#required-packages-for-the-build-host)
 * Build the project using kas by running `kas build --update mukube/kas-base.yaml`
 
 ## Documentation
